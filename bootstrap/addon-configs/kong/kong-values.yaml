@@ -1,0 +1,98 @@
+# === Kong Gateway Unified Deployment for Dev ===
+image:
+  repository: kong/kong-gateway
+  tag: "3.10.0.0"
+
+ingressController:
+  enabled: true
+  installCRDs: false
+
+# Role setup
+env:
+  role: traditional
+  database: "postgres"
+  pg_host: "postgres.default.svc.cluster.local"
+  pg_user: "kong"
+  pg_database: "kong"
+  pg_password: "supersecurepassword"
+  anonymous_reports: "off"
+
+  # TLS/mTLS for cluster (optional for local dev, but enabled here)
+  lua_ssl_trusted_certificate: /etc/secrets/kong-cluster-cert/tls.crt
+  cluster_cert: /etc/secrets/kong-cluster-cert/tls.crt
+  cluster_cert_key: /etc/secrets/kong-cluster-cert/tls.key
+
+admin:
+  enabled: true
+  type: ClusterIP
+  http:
+    enabled: true
+  tls:
+    enabled: true
+  mtls:
+    enabled: true
+
+manager:
+  enabled: true
+  ingress:
+    enabled: true
+    hostname: kong.helix
+    tls:
+      enabled: true
+      secretName: mkcert-root-ca-secret
+
+proxy:
+  enabled: true
+  type: ClusterIP
+  http:
+    enabled: true
+  tls:
+    enabled: true
+  mtls:
+    enabled: true
+
+serviceAccount:
+  create: true
+  name: kong-sa
+
+# Mount TLS secrets from mkcert (for cluster and admin/proxy ingress)
+secretVolumes:
+  - kong-cluster-cert
+  - kong-proxy-mtls
+
+certs:
+  tls:
+    secretName: mkcert-root-ca-secret
+  proxy:
+    secretName: kong-proxy-mtls
+  admin:
+    secretName: kong-admin-mtls
+
+# Custom OIDC plugin (if using)
+volumes:
+  - name: kong-plugin-oidc-volume
+    configMap:
+      name: kong-plugin-oidc
+
+volumeMounts:
+  - name: kong-plugin-oidc-volume
+    mountPath: /opt/kong/custom_plugins/kong/plugins/oidc
+    readOnly: true
+
+extraSecretMounts:
+  - name: kong-proxy-mtls
+    secret: kong-proxy-mtls
+    mountPath: /etc/secrets/proxy
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Optional: StatefulSet instead of Deployment
+deployment:
+  kind: StatefulSet
+  replicas: 1

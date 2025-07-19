@@ -1,0 +1,31 @@
+# 🐳 Container resource tuning - bootstrap\configs\adminer\adminer_values.yaml
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+# 🌐 Service configuration
+service:
+  type: ClusterIP
+  port: 8080
+
+# 📦 Replica settings
+replicaCount: 1
+
+# ⚠️ Optional Ingress (commented out by default)
+# ingress:
+# enabled: true
+# annotations:
+# kubernetes.io/ingress.class: traefik
+# hosts:
+# - host: adminer.helix
+# paths:
+# - path: /
+# pathType: Prefix
+# tls:
+# - hosts:
+# - adminer.helix
+# secretName: helix-tls-cert

@@ -1,0 +1,22 @@
+# ~/helix_v3/bootstrap/configs/portal/portal-ingressroute.yaml
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: helix-portal-ingressroute
+  namespace: portal
+spec:
+  entryPoints:
+    - websecure 
+  routes:
+    - match: Host("portal.helix") 
+      kind: Rule
+      services:
+        - name: helix-portal-service 
+          port: 80 
+    - match: Host("portal.helix") 
+      kind: Rule
+      services:
+        - name: helix-portal-service 
+          port: 80 
+  tls:
+    secretName: helix-tls-cert 

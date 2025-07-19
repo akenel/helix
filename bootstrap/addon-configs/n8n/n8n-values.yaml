@@ -1,0 +1,64 @@
+# ~/helix_v3/bootstrap/addon-configs/n8n/n8n-values.yaml
+
+image:
+  repository: n8nio/n8n
+  tag: latest 
+
+main:
+  # Environment variables for n8n's core configuration
+  # See https://docs.n8n.io/hosting/configuration/environment-variables/
+  config:
+    GENERIC_TIMEZONE: Europe/Zurich
+    N8N_HOST: n8n.helix 
+  persistence:
+    enabled: true 
+    type: dynamic 
+    accessModes:
+      - ReadWriteOnce
+    size: 5Gi 
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 1000m 
+      memory: 1024Mi 
+
+  # Liveness and Readiness probes for health checks
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  readinessProbe:
+    httpGet:
+      path: /healthz
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+
+  # Service configuration
+  service:
+    type: ClusterIP
+    port: 80 
+
+ingress:
+  enabled: true
+  className: "traefik" 
+  hosts:
+    - host: n8n.helix
+      paths:
+        - / 
+  tls:
+    - hosts:
+        - n8n.helix
+      secretName: n8n-tls 
+valkey:
+  enabled: false

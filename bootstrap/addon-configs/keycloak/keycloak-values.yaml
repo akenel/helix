@@ -1,0 +1,64 @@
+auth:
+  adminUser: "admin"
+  adminPassword: "admin"
+
+externalDatabase:
+  host: "postgresql-helix.identity.svc.cluster.local"
+  user: "keycloak"
+  password: "pg_pass"
+  database: "postgresql-helix-db"
+  port: 5432
+
+postgresql:
+  enabled: false
+
+ingress:
+  enabled: true
+  ingressClassName: "traefik"
+  hostname: "keycloak.helix"
+  tls: true
+  annotations:
+    cert-manager.io/cluster-issuer: "mkcert-ca-issuer"
+
+proxy: edge
+
+extraEnvVars:
+  - name: KEYCLOAK_IMPORT
+    value: "/opt/keycloak/addon-configs/helix-realm.json"
+  - name: KEYCLOAK_THEME
+    value: "helix"
+
+extraVolumes:
+  - name: helix-theme
+    configMap:
+      name: helix-theme
+  - name: helix-realm-import
+    configMap:
+      name: helix-realm-import
+
+extraVolumeMounts:
+  - name: helix-theme
+    mountPath: /opt/keycloak/themes/helix
+    readOnly: true
+  - name: helix-realm-import
+    mountPath: /opt/keycloak/addon-configs/helix-realm.json
+    subPath: helix-realm.json
+    readOnly: true
+
+resources:
+  requests:
+    memory: "1Gi"
+    cpu: "200m"
+  limits:
+    memory: "2Gi"
+    cpu: "500m"
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: 8080
+  initialDelaySeconds: 33
+  periodSeconds: 10
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 10

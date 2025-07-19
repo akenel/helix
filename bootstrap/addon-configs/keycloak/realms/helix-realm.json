@@ -1,0 +1,75 @@
+{
+  "id": "helix",
+  "realm": "helix",
+  "displayName": "⚙️ Helix Identity Hub",
+  "displayNameHtml": "<span style='color:#7FDBFF;'>⚙️ Helix <strong>Identity Hub</strong></span>",
+  "enabled": true,
+  "roles": {
+    "realm": [
+      { "name": "admin" },
+      { "name": "dev" },
+      { "name": "test" },
+      { "name": "guest" }
+    ]
+  },
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "admin", "temporary": false }],
+      "realmRoles": ["admin"]
+    },
+    {
+      "username": "developer",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "dev", "temporary": false }],
+      "realmRoles": ["dev"]
+    },
+    {
+      "username": "tester",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "test", "temporary": false }],
+      "realmRoles": ["test"]
+    },
+    {
+      "username": "guest",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "guest", "temporary": false }],
+      "realmRoles": ["guest"]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "vault",
+      "secret": "vault-secret",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "redirectUris": ["https://vault.helix/*"]
+    },
+    {
+      "clientId": "traefik",
+      "secret": "traefik-secret",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "redirectUris": ["https://traefik.helix/*"]
+    },
+    {
+      "clientId": "adminer",
+      "secret": "adminer-secret",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "redirectUris": ["https://adminer.helix/*"]
+    },
+    {
+      "clientId": "welcome-app",
+      "secret": "helix-welcome-secret",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "redirectUris": ["https://welcome.helix/*"]
+    }
+  ]
+}

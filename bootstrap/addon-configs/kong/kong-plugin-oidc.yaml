@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kong-plugin-oidc
+  namespace: kong
+data: 
+  kong-plugin-oidc.lua: |
+    return {
+      name = "oidc",
+      config = {
+        issuer = "https://keycloak.helix/realms/helix",
+        client_id = "helix-app",
+        client_secret = "KingKong",
+        redirect_uri = "https://kong.helix/callback",
+        scopes = "openid profile email",
+        bearer_only = "no",
+        realm = "helix",
+        session_secret = "something-random"
+      }
+    }

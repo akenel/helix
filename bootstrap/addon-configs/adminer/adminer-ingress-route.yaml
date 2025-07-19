@@ -1,0 +1,16 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: adminer-ingress
+  namespace: database-ui
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host("adminer.helix")
+      kind: Rule
+      services:
+        - name: adminer
+          port: 8080
+  tls:
+    secretName: helix-tls-cert

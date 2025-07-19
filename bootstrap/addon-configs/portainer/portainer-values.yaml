@@ -1,0 +1,70 @@
+# portainer-values.yaml
+
+service:
+  enabled: true
+  type: ClusterIP
+
+ingress:
+  enabled: true
+  ingressClassName: "traefik"
+  rules:
+    - host: portainer.helix
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: portainer
+                port:
+                  number: 9000
+  tls:
+    - secretName: portainer-tls
+      hosts:
+        - portainer.helix
+
+resources:
+  limits:
+    cpu: "0.5"
+    memory: "512Mi"
+  requests:
+    cpu: "0.25"
+    memory: "256Mi"
+
+# Create Kubernetes secret manually via portainer-secrets.sh
+adminPasswordSecret:
+  existingSecret: portainer-oidc-secret
+  adminPasswordKey: admin-password
+
+# Extra environment variables to enable OIDC (read from secret)
+extraEnv:
+  - name: OIDC_SETTINGS_CLIENT_ID
+    valueFrom:
+      secretKeyRef:
+        name: portainer-oidc-secret
+        key: oidc-client-id
+
+  - name: OIDC_SETTINGS_CLIENT_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: portainer-oidc-secret
+        key: oidc-client-secret
+
+  - name: OIDC_SETTINGS_OIDC_ISSUER
+    value: "https://keycloak.helix/realms/helix"
+
+  - name: OIDC_SETTINGS_AUTHENTICATION_METHOD
+    value: "openidconnect"
+
+  - name: OIDC_SETTINGS_SCOPE
+    value: "openid email profile"
+
+persistence:
+  enabled: true
+  storageClass: "manual"
+  accessModes:
+    - ReadWriteOnce
+  size: 1Gi
+
+
+

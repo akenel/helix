@@ -1,0 +1,16 @@
+# ~/helix_v3/bootstrap/configs/portal/portal-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: helix-portal-service
+  namespace: portal
+  labels:
+    app: helix-portal
+spec:
+  selector:
+    app: helix-portal  
+  ports:
+    - protocol: TCP
+      port: 80 
+      targetPort: 80  
+  type: ClusterIP 

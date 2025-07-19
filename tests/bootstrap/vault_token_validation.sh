@@ -1,0 +1,1 @@
+tests/vault_token_validation.sh  confirms token is live and can access KV

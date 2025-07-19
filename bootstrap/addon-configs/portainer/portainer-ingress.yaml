@@ -1,0 +1,16 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: portainer-dashboard
+  namespace: portainer
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host("portainer.helix")
+      kind: Rule
+      services:
+        - name: portainer
+          port: 9000
+  tls:
+    secretName: helix-tls-cert

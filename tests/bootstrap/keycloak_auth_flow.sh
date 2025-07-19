@@ -1,0 +1,1 @@
+# tests/keycloak_auth_flow.sh – verifies login endpoint works with OIDC

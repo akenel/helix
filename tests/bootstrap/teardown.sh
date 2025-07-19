@@ -1,0 +1,1 @@
+# tests/teardown.sh – deletes all resources cleanly

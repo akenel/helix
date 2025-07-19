@@ -1,0 +1,17 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: vault-ui
+  namespace: vault
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host("vault.helix")
+      kind: Rule
+      services:
+        - name: vault
+          port: 8200
+          scheme: http
+  tls:
+    secretName: helix-tls-cert

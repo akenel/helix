@@ -1,0 +1,34 @@
+# ~/helix_v3/bootstrap/configs/portal/portal-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: helix-portal
+  namespace: portal
+  labels:
+    app: helix-portal
+spec:
+  replicas: 1 
+  selector:
+    matchLabels:
+      app: helix-portal
+  template:
+    metadata:
+      labels:
+        app: helix-portal
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine  
+        ports:
+        - containerPort: 80  
+        volumeMounts:
+        - name: html-volume
+          mountPath: /usr/share/nginx/html  
+          readOnly: true  
+      volumes:
+      - name: html-volume
+        configMap:
+          name: helix-portal-html 
+          items:
+          - key: index.html
+            path: index.html 

@@ -1,0 +1,49 @@
+replicaCount: 1
+
+zookeeper:
+  enabled: true
+  replicaCount: 1
+
+listeners:
+  client:
+    protocol: SASL_PLAINTEXT
+  interbroker:
+    protocol: SASL_PLAINTEXT
+  external:
+    protocol: SASL_PLAINTEXT
+
+externalAccess:
+  enabled: true
+  autoDiscovery:
+    enabled: true
+  service:
+    type: ClusterIP
+    domain: helix
+
+service:
+  type: ClusterIP
+
+rbac:
+  create: true
+
+auth:
+  enabled: true
+  sasl:
+    mechanism: plain
+  clientProtocol: sasl
+  interBrokerProtocol: sasl
+  zookeeperProtocol: sasl
+  username: kafkauser
+  password: kafkapass
+  existingSecret: ""
+  allowAnonymous: false
+
+metrics:
+  kafka:
+    enabled: true
+  jmx:
+    enabled: true
+
+persistence:
+  storageClass: "local-path" 
+

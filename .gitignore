@@ -1,0 +1,87 @@
+############################################################
+# 🛡️  HELIX SECURITY & SECRETS - DO NOT TRACK
+############################################################
+
+# 🔐 Vault tokens, secrets & sensitive data
+.vault_root_token
+vault.env
+vault-secrets-helix.txt
+
+# 🐘 PostgreSQL & Adminer
+adminer.env
+postgresql_values.yaml
+
+# 🔏 Certificates, encryption keys & TLS materials
+*.crt
+*.key
+*.pem
+*.enc
+*.jks
+*.p12
+
+# 🔐 Generic secrets directory (custom usage)
+secrets/
+certs/
+
+############################################################
+# 🧪  TEMPORARY FILES & DEVELOPMENT ARTIFACTS
+############################################################
+
+# 💾 Logs & caches
+logs/
+*.log
+*.bak
+*.swp
+
+# 🧪 Runtime or transient temp files
+tmp/
+.cache/
+*.pid
+*.sock
+
+############################################################
+# ⚙️  Kube / Env Configs & Local Overlays
+############################################################
+
+# Local Kubernetes or environment overrides
+*.env
+.env
+*.kube
+
+# Kube-generated output or kubeconfig
+.kubeconfig
+
+############################################################
+# 💻  OS / Editor / Tooling Junk
+############################################################
+
+# macOS system files
+.DS_Store
+
+# Windows explorer files
+Thumbs.db
+
+# JetBrains IDEs
+.idea/
+
+# VS Code
+.vscode/
+
+# Python artifacts
+__pycache__/
+*.pyc
+
+# Vim/Neovim swap files
+*.swp
+
+############################################################
+# 🚨  MANUAL: Double-Check Legacy or Flagged Secrets
+#       (Ensure these no longer exist or are moved)
+############################################################
+
+# Flagged by previous scans or history
+bootstrap/configs/vault/.vault_root_token
+bootstrap/vault-secrets-helix.txt
+bootstrap/configs/vault/.env
+certs/vault-secrets-helix.txt
+

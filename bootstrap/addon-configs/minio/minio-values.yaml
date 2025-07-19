@@ -1,0 +1,11 @@
+mode: standalone
+accessKey:
+  password: helixaccess
+secretKey:
+  password: helixsecret
+service:
+  type: ClusterIP
+ingress:
+  enabled: true
+  hostname: minio.helix
+  tls: true

@@ -1,0 +1,56 @@
+# bootstrap\addon-configs\services.yaml
+plugins:
+  - name: n8n
+    emoji: ♨️
+    description: "Low-code workflow automation"
+    enabled: true
+    chart: oci://8gears.container-registry.com/library/n8n
+    version: 1.0.10
+    repo:
+      name: 8gears
+      hook: oci://8gears.container-registry.com
+    namespace: n8n
+    values_file: bootstrap/addon-configs/n8n/n8n-values.yaml
+    hostname: n8n.helix
+    tls_secret: n8n-tls
+    notes: |
+      - Editor runs on port 5678
+      - Needs encryption key
+
+tls_services:
+  - name: keycloak
+    namespace: identity
+    hostname: keycloak.helix
+    secret_name: keycloak-helix-tls # Specific secret name for Keycloak
+    service_name: keycloak
+    service_emoji: 🛡️
+    service_desc: "Single sign-on identity provider"
+
+  - name: vault
+    namespace: vault
+    hostname: vault.helix
+    secret_name: helix-tls-cert # Common secret name pattern
+
+  - name: portainer
+    namespace: portainer
+    hostname: portainer.helix
+    secret_name: helix-tls-cert # Common secret name pattern
+
+  - name: adminer
+    namespace: database-ui
+    hostname: adminer.helix
+    secret_name: helix-tls-cert
+
+  - name: kong
+    namespace: kong
+    hostname: kong.helix
+    secret_name: helix-tls-cert
+    # You could add multiple hostnames here if needed for Kong's proxy/manager
+    # additional_hostnames:
+    #   - api.helix
+
+  - name: kafka-ui # Example: assuming you're deploying a Kafka UI like Kowl or Kafka UI
+    namespace: kafka
+    hostname: kafka-ui.helix
+    secret_name: helix-tls-cert
+

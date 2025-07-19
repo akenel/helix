@@ -1,0 +1,29 @@
+# traefik-values.yaml
+ports:
+  web:
+    exposedPort: 80
+    expose:
+      default: true
+  websecure:
+    exposedPort: 443
+    expose:
+      default: true
+    tls:
+      enabled: true
+
+additionalArguments:
+  - "--api.dashboard=true"
+  - "--entrypoints.web.address=:80"
+  - "--entrypoints.websecure.address=:443"
+  - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+  - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+  - "--providers.kubernetescrd"
+  - "--log.level=INFO"
+
+ingressRoute:
+  dashboard:
+    enabled: true
+
+service:
+  enabled: true
+  type: LoadBalancer

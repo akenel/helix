@@ -1,0 +1,22 @@
+_format_version: "1.1"
+services:
+  - name: kong-admin-api
+    url: http://localhost:8001
+    routes:
+      - name: kong-admin-route
+        paths:
+          - /
+
+plugins:
+  - name: oidc
+    service: kong-admin-api
+    config:
+      client_id: kong-admin
+      client_secret: <YOUR_KC_SECRET>
+      discovery: https://keycloak.helix/auth/realms/helix/.well-known/openid-configuration
+      bearer_only: true
+      realm: helix
+      scopes:
+        - openid
+        - profile
+        - email
