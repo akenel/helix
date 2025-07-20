@@ -1,0 +1,133 @@
+## 📦 Plugin Installation System (`install-service.sh`)
+
+The **Helix Plugin Manager** is a dynamic, declarative interface to install, validate, upgrade, and remove services from your Kubernetes cluster via Helm charts. It operates through a modular shell architecture, offering flexibility, validation, and clean lifecycle management.
+
+---
+
+### 🚀 Features
+
+* 🧠 **Plugin-aware CLI**: Run actions per plugin using `--plug <name> --install`, `--validate-only`, `--uninstall`, etc.
+* 🧾 **Declarative YAML Structure**: Every plugin includes a `values.yaml` that drives its Helm configuration.
+* 🔐 **Secrets Integration**: Supports `vault:` references in YAML for dynamic secret resolution.
+* 📚 **Service Catalog**: Controlled through `services.yaml` for central service metadata and control.
+* 🔁 **Dry-run Validation**: Helm dry-run execution (`--validate-only`) ensures values are valid before real deployments.
+* 🧼 **Clean Lifecycle**: Easily uninstall services via CLI without residual resource conflicts.
+* 🧪 **Plugin Testing**: Lifecycle test script for continuous integration testing of deployments.
+* 📜 **Whiptail UI**: Optional TUI submenu for plugin operations from the main orchestrator.
+
+---
+
+### 🗂️ Folder Structure
+
+```plaintext
+bootstrap/
+├── addon-configs/
+│   ├── <plugin>/
+│   │   └── <plugin>-values.yaml       # Per-plugin Helm values
+│   ├── shared/                        # Shared value templates
+│   ├── helpers/                       # Modular shell helpers (display, deploy, parse, validate)
+│   ├── services.yaml                  # Plugin registry and descriptions
+│   └── install-service.sh             # Main controller script
+```
+
+---
+
+### 🛠️ Usage
+
+```bash
+# Validate n8n without deploying
+./bootstrap/addon-configs/install-service.sh --plug n8n --validate-only
+
+# Install portainer
+./bootstrap/addon-configs/install-service.sh --plug portainer --install
+
+# Uninstall a plugin
+./bootstrap/addon-configs/install-service.sh --plug n8n --uninstall
+
+# Edit plugin's values file
+./bootstrap/addon-configs/install-service.sh --plug portainer --edit
+
+# Launch interactive menu
+./bootstrap/deployment-phases/run_plugins_menu.sh
+```
+
+---
+
+### 📋 Plugin Entry Format (in `services.yaml`)
+
+```yaml
+plugins:
+  - name: n8n
+    description: Low-code workflow automation
+    enabled: true
+    values_file: "n8n/n8n-values.yaml"
+    helm_install_cmd: "helm install my-n8n n8n/n8n"
+    namespace: default
+```
+
+---
+
+### 📈 Future Improvements
+
+1. 🧪 Enhanced validation (`helm-schema`, `yamllint`)
+2. 📦 Plugin version locking & history tracking
+3. 💬 Internationalization support for menus
+4. 🔍 Dependency resolution between services
+5. 🧰 Integrated secret rendering from Vault during `install-service.sh`
+
+---
+
+### 🛑 Manual Cleanup Tip
+
+Should a plugin crash or hang:
+
+```bash
+# Uninstall Helm chart
+helm uninstall my-n8n -n default
+
+# Delete stuck pods (if needed)
+kubectl delete pod <pod-name> -n <namespace>
+
+# Reset a namespace (use carefully!)
+kubectl delete ns <namespace>
+```
+
+---
+
+### ❤️ A Word From the Creator
+
+> *"What we’ve built is a private cloud suite rivaling commercial stacks at a fraction of the complexity and none of the lock-in. We believe in local-first orchestration. Helix is a statement — of independence, clarity, and power."* — Angel & Sherlock
+
+---
+
+## 🧭 Next Steps (Post-Commit)
+
+Here’s a roadmap suggestion for your **next Git branch** (`feature/plugin-menu-refactor` perhaps):
+
+### 🗺️ Immediate Tasks:
+
+* [ ] Wire in `run_plugins_menu.sh` to Whiptail menu option **B**
+* [ ] Add Helm chart schema validation (`helm-schema`)
+* [ ] Auto-detect and inject `service.name` into `values.yaml` when missing
+* [ ] Improve log rotation / cleanup for `/logs/`
+
+### 🌱 Growth Ideas:
+
+* [ ] Plugin dependency graph (e.g., n8n requires Keycloak)
+* [ ] JSON schema UI for customizing plugin YAMLs
+* [ ] GitHub Actions workflow for testing `test-plugin-lifecycle.sh`
+
+---
+
+### 🔗 Suggested Section Header for README
+
+Append this new section to your current README.md under:
+
+```markdown
+## ⚙️ Advanced Deployment: The Helix Plugin Installer
+```
+
+This will neatly separate it from core cluster bootstrap and emphasize its power.
+
+---
+
