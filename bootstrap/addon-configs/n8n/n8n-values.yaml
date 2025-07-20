@@ -1,64 +1,233 @@
-# ~/helix_v3/bootstrap/addon-configs/n8n/n8n-values.yaml
-
 image:
   repository: n8nio/n8n
-  tag: latest 
+  tag: latest
 
 main:
-  # Environment variables for n8n's core configuration
-  # See https://docs.n8n.io/hosting/configuration/environment-variables/
   config:
     GENERIC_TIMEZONE: Europe/Zurich
-    N8N_HOST: n8n.helix 
-  persistence:
-    enabled: true 
-    type: dynamic 
-    accessModes:
-      - ReadWriteOnce
-    size: 5Gi 
-  resources:
-    requests:
-      cpu: 200m
-      memory: 512Mi
-    limits:
-      cpu: 1000m 
-      memory: 1024Mi 
+    N8N_HOST: n8n.helix
+    db:
+      type: postgresdb
+      postgresdb:
+        host: postgresql-helix.identity.svc.cluster.local
+        port: 5432
+        user: n8n
+        password: vault:secret/data/postgresql#password
+        database: n8n_db
 
-  # Liveness and Readiness probes for health checks
-  livenessProbe:
-    httpGet:
-      path: /healthz
-      port: http
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 6
-    successThreshold: 1
-  readinessProbe:
-    httpGet:
-      path: /healthz
-      port: http
-    initialDelaySeconds: 10
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 6
-    successThreshold: 1
+      n8n:
+        encryption_key: "my_secret" # ==> turns into ENV: N8N_ENCRYPTION_KEY=my_secret
+      db:
+        type: postgresdb # ==> turns into ENV: DB_TYPE=postgresdb
+        postgresdb:
+          host: 192.168.0.52 # ==> turns into ENV: DB_POSTGRESDB_HOST=192.168.0.52
+      node:
+        function:
+          # The following settings are used to allow the use of certain Node.js built-in modules and
+          function_allow_builtin: "*" # ==> turns into ENV: NODE_FUNCTION_ALLOW_BUILTIN="*"
+          function_allow_external: "*" # ==> turns into ENV: NODE_FUNCTION_ALLOW_EXTERNAL="*"
+          function_allow_safe: "*" # ==> turns into ENV: NODE_FUNCTION_ALLOW_SAFE="*"
+          function_allow_environment: "*" # ==> turns into ENV: NODE_FUNCTION_ALLOW_ENVIRONMENT="*"
+          function_allow_process: "*" # ==> turns into ENV: NODE_FUNCTION_ALLOW_PROCESS="*"
+          function_allow_fs: "*" # ==> turns into ENV: NODE_FUNCTION_ALLOW_FS="*"
+          function_allow_unsafe: "*" # ==> turns into ENV: NODE_FUNCTION_ALLOW_UNSAFE="*"
+          function_allow_require: "*" # ==> turns into ENV: NODE_FUNCTION_ALLOW_REQUIRE="*"
+          function_allow_require_cache: "*" # ==> turns into ENV: NODE_FUNCTION_ALLOW_REQUIRE_CACHE="*"
+          function_allow_require_context: "*" # ==> turns into ENV: NODE_FUNCTION_ALLOW_REQUIRE_CONTEXT="*"
+          function_allow_require_main: "*" # ==> turns into ENV: NODE_FUNCTION_ALLOW_REQUIRE_MAIN="*"
+          function_allow_require_self: "*" # ==> turns into ENV: NODE_FUNCTION_ALLOW_REQUIRE_SELF="*"
+          function_allow_require_relative: "*" # ==> turns into ENV: NODE_FUNCTION_ALLOW_REQUIRE_RELATIVE="*"
+          function_allow_require_relative_cache: "*" # ==> turns into ENV: NODE_FUNCTION_ALLOW_REQUIRE_RELATIVE_CACHE="*"
+          function_allow_require_relative_context: "*" # ==> turns into ENV: NODE_FUNCTION_ALLOW_REQUIRE_RELATIVE_CONTEXT="*"
+          function_allow_require_relative_main: "*" # ==> turns into ENV: NODE_FUNCTION_ALLOW_REQUIRE_RELATIVE_MAIN="*"
+          function_allow_require_relative_self: "*" # ==> turns into ENV: NODE_FUNCTION_ALLOW_REQUIRE_RELATIVE_SELF="*"
 
-  # Service configuration
-  service:
-    type: ClusterIP
-    port: 80 
+  env:
+    - name: N8N_ENCRYPTION_KEY
+      valueFrom:
+        secretKeyRef:
+          name: n8n-secret
+          key: encryption-key
+
+    - name: DB_USER
+      valueFrom:
+        secretKeyRef:
+          name: postgres-n8n-creds
+          key: username
+    - name: DB_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: postgres-n8n-creds
+          key: password
+    - name: DB_HOST
+      value: postgresql-helix.identity.svc.cluster.local
+    - name: DB_PORT
+      value: "5432"
+    - name: DB_DATABASE
+      value: n8n_db
+    - name: DB_TYPE
+      value: postgresdb
+    - name: N8N_PROTOCOL
+      value: https
+    - name: N8N_HOST
+      value: n8n.helix
+    - name: N8N_PORT
+      value: "443"
+    - name: N8N_ENCRYPTION_KEY
+      valueFrom:
+        secretKeyRef:
+          name: n8n-secret
+          key: encryption-key
+    - name: N8N_AUTH_TYPE
+      value: oAuth2
+    - name: N8N_OAUTH2_LOGIN
+      value: "https://keycloak.helix/realms/helix/protocol/openid-connect/auth"
+    - name: N8N_OAUTH2_TOKEN
+      value: "https://keycloak.helix/realms/helix/protocol/openid-connect/token"
+    - name: N8N_OAUTH2_CLIENT_ID
+      value: "n8n-client"
+    - name: N8N_OAUTH2_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: keycloak-client-n8n
+          key: client-secret
+    - name: N8N_OAUTH2_REDIRECT_URI
+      value: "https://n8n.helix/rest/oauth2/callback" 
+    - name: N8N_OAUTH2_LOGOUT_URI
+      value: "https://n8n.helix/rest/oauth2/logout"
+    - name: N8N_OAUTH2_AUTHORIZATION_URL
+      value: "https://keycloak.helix/realms/helix/protocol/openid-connect/auth"
+    - name: N8N_OAUTH2_TOKEN_URL
+      value: "https://keycloak.helix/realms/helix/protocol/openid-connect/token"  
+    - name: N8N_OAUTH2_USER_INFO_URL
+      value: "https://keycloak.helix/realms/helix/protocol/openid-connect/userinfo"
+    - name: N8N_OAUTH2_SCOPE
+      value: "openid profile email"     
+    - name: N8N_OAUTH2_AUDIENCE
+      value: "n8n-client"   
+    - name: N8N_OAUTH2_AUTHORIZATION_METHOD
+      value: "client_secret_post"
+    - name: N8N_OAUTH2_RESPONSE_TYPE
+      value: "code" 
+    - name: N8N_OAUTH2_ACCESS_TOKEN_METHOD
+      value: "POST"
+    - name: N8N_OAUTH2_LOGOUT_URL
+      value: "https://keycloak.helix/realms/helix/protocol/openid-connect/logout"
+    - name: N8N_OAUTH2_LOGOUT_REDIRECT_URI
+      value: "https://n8n.helix/rest/oauth2/logout/callback"
+    - name: NODE_FUNCTION_ALLOW_BUILTIN
+      value: "*"
+    - name: NODE_FUNCTION_ALLOW_EXTERNAL
+      value: "*"  
+      allowRequireRelativeContext: "*"
+      allowRequireRelativeMain: "*"
+      allowRequireRelativeSelf: "*"
+      allowRequireRelativeCache: "*"
+      allowRequireRelative: "*"
+      allowRequireContext: "*"
+      allowRequireMain: "*"
+      allowRequireSelf: "*"
+      allowRequireCache: "*"
+      allowRequire: "*"
+      allowContext: "*"
+      allowMain: "*"
+      allowSelf: "*"
+      allowCache: "*"
+      allowEnvironment: "*"
+      allowProcess: "*"
+      allowFs: "*"
+      allowUnsafe: "*"
+      allowRequireUnsafe: "*"
+      allowRequireCacheUnsafe: "*"
+      allowRequireContextUnsafe: "*"
+      allowRequireMainUnsafe: "*"
+      allowRequireSelfUnsafe: "*"
+      allowRequireRelativeUnsafe: "*"
+      allowRequireRelativeCacheUnsafe: "*"
+      allowRequireRelativeContextUnsafe: "*"
+      allowRequireRelativeMainUnsafe: "*"
+      allowRequireRelativeSelfUnsafe: "*"
 
 ingress:
   enabled: true
-  className: "traefik" 
+  className: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: mkcert-ca-issuer
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.middlewares: helix-redirect@kubernetes
+    traefik.ingress.kubernetes.io/router.priority: "10"
+
   hosts:
     - host: n8n.helix
       paths:
-        - / 
+        - path: /
+          pathType: Prefix
+
   tls:
-    - hosts:
+    - secretName: n8n-tls
+      hosts:
         - n8n.helix
-      secretName: n8n-tls 
-valkey:
-  enabled: false
+
+  n8n:
+  basicAuth:
+    enabled: false # Disable basic auth as we are using OAuth2
+  oauth2:
+    enabled: true
+    clientId: n8n-client
+    clientSecret: keycloak-client-n8n
+    authUrl: https://keycloak.helix/realms/helix/protocol/openid-connect/auth
+    tokenUrl: https://keycloak.helix/realms/helix/protocol/openid-connect/token
+    userInfoUrl: https://keycloak.helix/realms/helix/protocol/openid-connect/userinfo
+    redirectUri: https://n8n.helix/rest/oauth2/callback
+    logoutUri: https://n8n.helix/rest/oauth2/logout
+
+  auth:
+    executeWorkflow: true
+    isDefaultUser: false
+
+  env:
+    - name: N8N_PROTOCOL
+      value: https
+    - name: N8N_HOST
+      value: n8n.helix
+    - name: N8N_PORT
+      value: "443"
+    - name: N8N_AUTH_TYPE
+      value: "oAuth2"
+    - name: N8N_OAUTH2_LOGIN
+      value: "https://keycloak.helix/realms/helix/protocol/openid-connect/auth"
+    - name: N8N_OAUTH2_TOKEN
+      value: "https://keycloak.helix/realms/helix/protocol/openid-connect/token"
+    - name: N8N_OAUTH2_CLIENT_ID
+      value: "n8n-client"
+    - name: N8N_OAUTH2_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: keycloak-client-n8n
+          key: client-secret
+    - name: N8N_OAUTH2_REDIRECT_URI
+      value: "https://n8n.helix/rest/oauth2/callback"
+    - name: N8N_OAUTH2_LOGOUT_URI
+      value: "https://n8n.helix/rest/oauth2/logout"
+    - name: N8N_OAUTH2_AUTHORIZATION_URL
+      value: "https://keycloak.helix/realms/helix/protocol/openid-connect/auth"
+    - name: N8N_OAUTH2_TOKEN_URL
+      value: "https://keycloak.helix/realms/helix/protocol/openid-connect/token"
+    - name: N8N_OAUTH2_USER_INFO_URL
+      value: "https://keycloak.helix/realms/helix/protocol/openid-connect/userinfo"
+    - name: N8N_OAUTH2_SCOPE
+      value: "openid profile email"
+    - name: N8N_OAUTH2_AUDIENCE
+      value: "n8n-client"
+    - name: N8N_OAUTH2_AUTHORIZATION_METHOD
+      value: "client_secret_post" 
+    - name: N8N_OAUTH2_RESPONSE_TYPE
+      value: "code"
+    - name: N8N_OAUTH2_ACCESS_TOKEN_METHOD
+      value: "POST"
+    - name: N8N_OAUTH2_LOGOUT_URL
+      value: "https://keycloak.helix/realms/helix/protocol/openid-connect/logout" 
+    - name: N8N_OAUTH2_LOGOUT_REDIRECT_URI
+      value: "https://n8n.helix/rest/oauth2/logout/callback"

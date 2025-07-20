@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# \\wsl.localhost\Ubuntu\home\angel\helix_v3\whiptail\helix-menu.sh
 # Source common configuration and utility functions
 HELIX_BOOTSTRAP_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 source "${HELIX_BOOTSTRAP_DIR}/utils/core/config.sh"

@@ -1,56 +1,40 @@
-# bootstrap\addon-configs\services.yaml
 plugins:
   - name: n8n
-    emoji: ♨️
+    emoji: ♻️
     description: "Low-code workflow automation"
     enabled: true
-    chart: oci://8gears.container-registry.com/library/n8n
-    version: 1.0.10
-    repo:
-      name: 8gears
-      hook: oci://8gears.container-registry.com
     namespace: n8n
     values_file: bootstrap/addon-configs/n8n/n8n-values.yaml
-    hostname: n8n.helix
-    tls_secret: n8n-tls
-    notes: |
-      - Editor runs on port 5678
-      - Needs encryption key
-
-tls_services:
-  - name: keycloak
-    namespace: identity
-    hostname: keycloak.helix
-    secret_name: keycloak-helix-tls # Specific secret name for Keycloak
-    service_name: keycloak
-    service_emoji: 🛡️
-    service_desc: "Single sign-on identity provider"
-
-  - name: vault
-    namespace: vault
-    hostname: vault.helix
-    secret_name: helix-tls-cert # Common secret name pattern
+    artifacthub_url: https://artifacthub.io/packages/helm/open-8gears/n8n
+    # You can now choose:
+    # Option 1: Explicit fields (preferred)
+    helm_chart_repo: "8gears.container-registry.com/library" # For OCI, this might be part of the chart name or just the registry
+    helm_chart_name: "n8n" # If helm_chart_repo is empty, this should be the full OCI path like oci://8gears.container-registry.com/library/n8n
+    helm_chart_version: "1.0.10"
+    helm_release_name_override: "my-n8n" # Will still be stripped by normalize_helm_command to 'n8n' by default
+    # Option 2: Fallback helm_install_cmd (if explicit fields above are missing or incomplete)
+    helm_install_cmd: helm install my-n8n oci://8gears.container-registry.com/library/n8n --version 1.0.10
+    # Add a default storage class if needed
+    default_storage_class: "local-path" # Example
 
   - name: portainer
+    emoji: 🐳
+    description: "Kubernetes-native UI and container management"
+    enabled: true
     namespace: portainer
-    hostname: portainer.helix
-    secret_name: helix-tls-cert # Common secret name pattern
-
-  - name: adminer
-    namespace: database-ui
-    hostname: adminer.helix
-    secret_name: helix-tls-cert
-
-  - name: kong
-    namespace: kong
-    hostname: kong.helix
-    secret_name: helix-tls-cert
-    # You could add multiple hostnames here if needed for Kong's proxy/manager
-    # additional_hostnames:
-    #   - api.helix
-
-  - name: kafka-ui # Example: assuming you're deploying a Kafka UI like Kowl or Kafka UI
-    namespace: kafka
-    hostname: kafka-ui.helix
-    secret_name: helix-tls-cert
-
+    values_file: bootstrap/addon-configs/portainer/portainer-values.yaml
+    artifacthub_url: https://artifacthub.io/packages/helm/portainer/portainer
+    # Option 1: Explicit fields (preferred)
+    helm_chart_repo: "portainer"
+    helm_chart_name: "portainer"
+    helm_chart_version: "1.0.69"
+    helm_release_name_override: "my-portainer" # Will still be stripped by normalize_helm_command to 'portainer' by default
+    # Option 2: Fallback helm_install_cmd (if explicit fields above are missing or incomplete)
+    helm_install_cmd: helm install my-portainer portainer/portainer --version 1.0.69
+    default_storage_class: "local-path" # Example
+    notes: |
+      1. Portainer web UI will be available at:
+         http://<cluster-ip>:9000
+      2. Default credentials:
+         Username: admin
+         Password: [set at first login]

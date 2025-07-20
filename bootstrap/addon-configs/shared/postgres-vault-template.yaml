@@ -1,0 +1,28 @@
+postgresql:
+  enabled: false  # External DB managed outside the chart
+
+externalDatabase:
+  type: postgresdb
+  host: postgresql-helix.identity.svc.cluster.local
+  port: 5432
+  user: vault:secret/data/postgres/n8n#username
+  password: vault:secret/data/postgres/n8n#password
+  database: {{ .Values.database | default "service_db" }}
+
+env:
+  - name: DB_HOST
+    value: postgresql-helix.identity.svc.cluster.local
+  - name: DB_PORT
+    value: "5432"
+  - name: DB_NAME
+    value: {{ .Values.database | default "service_db" }}
+  - name: DB_USER
+    valueFrom:
+      secretKeyRef:
+        name: postgres-n8n-creds
+        key: username
+  - name: DB_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: postgres-n8n-creds
+        key: password
