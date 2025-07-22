@@ -18,6 +18,9 @@ DEPLOY_PHASES_DIR="${SCRIPT_DIR}"
 HELIX_ROOT_DIR="$(realpath "$SCRIPT_DIR/../..")"
 export HELIX_ROOT_DIR
 
+echo "🔍 Debug: SCRIPT_DIR = $SCRIPT_DIR"
+echo "🔍 Debug: HELIX_ROOT_DIR = $HELIX_ROOT_DIR"
+
 # ─── Load Env Loader ───────────────────────────────────────────
 ENV_LOADER_PATH="${HELIX_ROOT_DIR}/bootstrap_env_loader.sh"
 
@@ -25,7 +28,15 @@ if [[ ! -f "$ENV_LOADER_PATH" ]]; then
   echo "❌ ERROR: bootstrap_env_loader.sh not found at: $ENV_LOADER_PATH"
   exit 1
 fi
+
+# Save our HELIX_ROOT_DIR before sourcing env loader (which overwrites it)
+SAVED_HELIX_ROOT_DIR="$HELIX_ROOT_DIR"
 source "$ENV_LOADER_PATH"
+# Restore our correct HELIX_ROOT_DIR
+HELIX_ROOT_DIR="$SAVED_HELIX_ROOT_DIR"
+export HELIX_ROOT_DIR
+
+echo "🔍 Debug: HELIX_ROOT_DIR after env loader = $HELIX_ROOT_DIR"
 
 # ─── Validation ────────────────────────────────────────────────
 UTILS_DIR="${SCRIPT_DIR}/utils"
@@ -77,22 +88,50 @@ create_k3d_cluster() {
 
     # Create the K3d cluster with the specified TLS SANs
     echo "🚀 Creating k3d cluster '$cluster_name' with TLS SANs trusted by mkcert CA..."
-KEYCLOAK_THEMES_PATH="$(realpath "bootstrap/addon-configs/keycloak/themes")"
-KEYCLOAK_REALMS_PATH="$(realpath "bootstrap/addon-configs/keycloak/realms")"
+    
+    # Use absolute paths from HELIX_ROOT_DIR to avoid working directory issues
+    KEYCLOAK_THEMES_PATH="$HELIX_ROOT_DIR/bootstrap/addon-configs/keycloak/themes"
+    KEYCLOAK_REALMS_PATH="$HELIX_ROOT_DIR/bootstrap/addon-configs/keycloak/realms"
+    
+    echo "🔍 Debug: KEYCLOAK_THEMES_PATH = $KEYCLOAK_THEMES_PATH"
+    echo "🔍 Debug: KEYCLOAK_REALMS_PATH = $KEYCLOAK_REALMS_PATH"
+    
+    # Validate paths exist before proceeding
+    if [[ ! -d "$KEYCLOAK_THEMES_PATH" ]]; then
+        echo "❌ ERROR: Keycloak themes directory not found!"
+        echo "📂 Expected: $KEYCLOAK_THEMES_PATH"
+        echo "📍 Current directory: $(pwd)"
+        echo "🔍 HELIX_ROOT_DIR: $HELIX_ROOT_DIR"
+        echo "🔍 Checking: ls -la $HELIX_ROOT_DIR/bootstrap/addon-configs/keycloak/"
+        ls -la "$HELIX_ROOT_DIR/bootstrap/addon-configs/keycloak/" || echo "❌ Directory not accessible"
+        echo ""
+        echo "🔧 To fix this issue:"
+        echo "   1. Navigate to the project root: cd ~/helix_v3"
+        echo "   2. Run the script from there: ./bootstrap/deployment-phases/01_create-cluster.sh"
+        echo "   3. Or ensure you're in the correct directory structure"
+        echo ""
+        exit 1
+    fi
+    
+    if [[ ! -d "$KEYCLOAK_REALMS_PATH" ]]; then
+        echo "❌ ERROR: Keycloak realms directory not found!"
+        echo "📂 Expected: $KEYCLOAK_REALMS_PATH"
+        echo "📍 Current directory: $(pwd)"
+        echo ""
+        echo "🔧 To fix this issue:"
+        echo "   1. Navigate to the project root: cd ~/helix_v3"
+        echo "   2. Run the script from there: ./bootstrap/deployment-phases/01_create-cluster.sh"
+        echo "   3. Or ensure the bootstrap/addon-configs/keycloak/realms directory exists"
+        echo ""
+        exit 1
+    fi
 
-EXTRA_MOUNTS=""
-
-if [[ -d "$KEYCLOAK_THEMES_PATH" ]]; then
-  EXTRA_MOUNTS+=" --volume $KEYCLOAK_THEMES_PATH:/helix-assets"
-else
-  echo "⚠️ Skipping mount: $KEYCLOAK_THEMES_PATH not found"
-fi
-
-if [[ -d "$KEYCLOAK_REALMS_PATH" ]]; then
-  EXTRA_MOUNTS+=" --volume $KEYCLOAK_REALMS_PATH:/keycloak-configs"
-else
-  echo "⚠️ Skipping mount: $KEYCLOAK_REALMS_PATH not found"
-fi
+    EXTRA_MOUNTS=""
+    EXTRA_MOUNTS+=" --volume $KEYCLOAK_THEMES_PATH:/helix-assets"
+    EXTRA_MOUNTS+=" --volume $KEYCLOAK_REALMS_PATH:/keycloak-configs"
+    
+    echo "✅ Keycloak themes will be mounted from: $KEYCLOAK_THEMES_PATH"
+    echo "✅ Keycloak realms will be mounted from: $KEYCLOAK_REALMS_PATH"
 
 k3d cluster create "$cluster_name" \
     --api-port 6550 \

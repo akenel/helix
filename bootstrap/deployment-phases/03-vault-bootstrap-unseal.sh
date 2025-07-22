@@ -163,9 +163,9 @@ printf "✅ %s complete\n" "$OPERATION_MSG"
 helm upgrade --install "$RELEASE" hashicorp/vault \
   --namespace "$NAMESPACE" --create-namespace \
   -f "$HELM_DEFAULT_VAULT_VALUES_FILE" \
-  --timeout 3m \
-    --wait
-    
+  --timeout 300s \
+  --wait
+
 echo ""
 echo "🌐 Applying IngressRoute for Vault UI..."
 
@@ -183,7 +183,7 @@ echo "✅ Vault Helm deployment complete."
 echo -e "\n⏳ Waiting for Vault pod to be running..."
 VAULT_POD=""
 PHASE="Unknown"
-for i in {1..10}; do
+for i in {1..30}; do
   VAULT_POD=$(kubectl get pods -n "$NAMESPACE" \
     -l app.kubernetes.io/instance="$RELEASE",app.kubernetes.io/name=vault \
     -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
@@ -195,7 +195,7 @@ for i in {1..10}; do
       break
     fi
   fi
-  echo "⏳ [$i/10] Waiting for pod... (current phase: $PHASE)"
+  echo "⏳ [$i/30] Waiting for pod... (current phase: $PHASE)"
   sleep 2
 done
 
@@ -350,4 +350,4 @@ chmod 600 "$VAULT_ROOT_TOKEN_FILE"
 echo "✅ Saved Vault Root Token to $VAULT_ROOT_TOKEN_FILE"
 
 # Optional: also update .env file (only if it exists already)
-cp "$VAULT_ENV_FILE" "$VAULT_ENV_FILE" 2>/dev/null || true
+# cp "$VAULT_ENV_FILE" "$VAULT_ENV_FILE" 2>/dev/null || true

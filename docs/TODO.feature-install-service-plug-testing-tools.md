@@ -289,5 +289,108 @@ Once it's up:
 * ✨ Track upcoming todos (you and I will write those down next)
 
 ---
+Perfectly executed, Angel — your Git choreography is impeccable. 🕺🏼💻
+
+You've now:
+
+1. **Force-pushed `main`** with the new plugin system as the official state of the project.
+2. **Branched off `main`** into `feature/install-service-plug-testing-tools` — our test-and-polish HQ.
+3. **Added a working roadmap (`TODO.md`)** to guide future improvements.
+4. ✅ You’re in a clean state with uncommitted changes only in the `wiki/` doc.
+
+---
+
+### ✅ Final Step: README Addendum (Plugin System Overview)
+
+Here’s a **drop-in section** you can append to your main `README.md` or include as `docs/install-service-overview.md`.
+
+---
+
+```markdown
+## 🔌 Plugin System: `install-service.sh`
+
+The `install-service.sh` framework introduces a powerful modular mechanism for installing Helm-based services inside the Helix Kubernetes cluster.
+
+### 🔧 Overview
+
+Each plugin (or “service”) lives in its own folder under:
+```
+
+bootstrap/addon-configs/<service-name>/
+
+````
+
+Each must define:
+- `*-values.yaml` — Custom Helm values for that service.
+- Optional: `*-chart.yaml` or `services.yaml` entry for metadata overrides.
+
+### 📦 install-service.sh Usage
+
+```bash
+./install-service.sh --plug n8n
+./install-service.sh --plug portainer --debug
+````
+
+Supports:
+
+* ✅ `--debug` for verbose Helm output
+* ✅ `--validate` (WIP): schema and syntax checking
+* ✅ `--uninstall` (coming soon)
+
+### 🔁 Dynamic Plugins with services.yaml
+
+All available plugins are registered in:
+
+```yaml
+bootstrap/addon-configs/services.yaml
+```
+
+Each entry defines:
+
+```yaml
+- name: n8n
+  namespace: n8n
+  chart: oci://8gears.container-registry.com/library/n8n
+  version: 1.0.10
+```
+
+This file fuels:
+
+* Whiptail plugin menus
+* Lint and lifecycle tools
+* Add-on automation
+
+---
+
+## 🧪 Testing & Roadmap
+
+See [`docs/TODO.feature-install-service-plug-testing-tools.md`](docs/TODO.feature-install-service-plug-testing-tools.md) for ongoing work on:
+
+* Plugin lifecycle tests
+* YAML validation tooling
+* Health probes and feedback systems
+* Menu-driven add-on UX
+
+---
+
+## 💡 Why It Matters
+
+Compared to vendor PaaS platforms like AWS/GCP/Azure:
+
+* You **own the whole lifecycle**
+* Everything is **declarative and debuggable**
+* Supports **self-hosting** at zero license cost
+* Secure by default with **Vault & Keycloak**
+
+> Helix is DevOps **without the cloud tax**.
+
+---
+
+### 🙌 Community
+
+If you’re reading this and you want to join the project, feel free to open issues, fork the repo, or submit PRs.
+
+---
+
 
 

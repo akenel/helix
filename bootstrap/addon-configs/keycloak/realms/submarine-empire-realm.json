@@ -1,0 +1,391 @@
+{
+  "id": "submarine-empire",
+  "realm": "submarine-empire",
+  "displayName": "🚢 Submarine Empire - 3D Printing Hub",
+  "displayNameHtml": "<div style='color:#00d9ff; text-align:center;'><h2>🚢 <strong>Submarine Empire</strong></h2><p style='color:#7FDBFF; margin:0;'>3D Printing Identity Management</p></div>",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "verifyEmail": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "waitIncrementSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "failureFactor": 30,
+  "roles": {
+    "realm": [
+      {
+        "name": "submarine-admin",
+        "description": "Full submarine empire administrator access",
+        "composite": false
+      },
+      {
+        "name": "submarine-operator",
+        "description": "Submarine operations and 3D printing management",
+        "composite": false
+      },
+      {
+        "name": "dev",
+        "description": "Development team access to all dev tools",
+        "composite": false
+      },
+      {
+        "name": "tester",
+        "description": "Quality assurance and testing access",
+        "composite": false
+      },
+      {
+        "name": "guest",
+        "description": "Limited read-only guest access",
+        "composite": false
+      },
+      {
+        "name": "3d-designer",
+        "description": "3D model design and CAD access",
+        "composite": false
+      },
+      {
+        "name": "print-operator",
+        "description": "3D printer operation and monitoring",
+        "composite": false
+      }
+    ]
+  },
+  "groups": [
+    {
+      "name": "submarine-command",
+      "path": "/submarine-command",
+      "realmRoles": ["submarine-admin", "submarine-operator"]
+    },
+    {
+      "name": "development-team", 
+      "path": "/development-team",
+      "realmRoles": ["dev", "3d-designer"]
+    },
+    {
+      "name": "testing-crew",
+      "path": "/testing-crew", 
+      "realmRoles": ["tester"]
+    },
+    {
+      "name": "production-floor",
+      "path": "/production-floor",
+      "realmRoles": ["print-operator", "3d-designer"]
+    },
+    {
+      "name": "visitors",
+      "path": "/visitors",
+      "realmRoles": ["guest"]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "email": "admin@submarine-empire.helix",
+      "firstName": "Empire",
+      "lastName": "Administrator", 
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["submarine-admin", "submarine-operator", "dev"],
+      "groups": ["/submarine-command", "/development-team"]
+    },
+    {
+      "username": "dev",
+      "email": "dev@submarine-empire.helix",
+      "firstName": "Development",
+      "lastName": "Engineer",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password", 
+          "value": "dev",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["dev", "3d-designer"],
+      "groups": ["/development-team"]
+    },
+    {
+      "username": "tester",
+      "email": "tester@submarine-empire.helix",
+      "firstName": "Quality",
+      "lastName": "Assurance",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "test", 
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["tester"],
+      "groups": ["/testing-crew"]
+    },
+    {
+      "username": "guest",
+      "email": "guest@submarine-empire.helix",
+      "firstName": "Guest",
+      "lastName": "Visitor",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "guest",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["guest"],
+      "groups": ["/visitors"]
+    },
+    {
+      "username": "submarine-captain",
+      "email": "captain@submarine-empire.helix",
+      "firstName": "Submarine",
+      "lastName": "Captain",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "captain123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["submarine-admin", "submarine-operator", "print-operator"],
+      "groups": ["/submarine-command", "/production-floor"]
+    },
+    {
+      "username": "print-master",
+      "email": "printmaster@submarine-empire.helix",
+      "firstName": "Print",
+      "lastName": "Master",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "print123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["print-operator", "3d-designer"],
+      "groups": ["/production-floor"]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "submarine-3d-app",
+      "name": "Submarine 3D Application",
+      "description": "Main 3D printing application for submarine empire",
+      "secret": "submarine-3d-secret-2024",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "redirectUris": [
+        "https://submarine-3d.helix/*",
+        "http://localhost:3000/*",
+        "http://localhost:8080/*"
+      ],
+      "webOrigins": [
+        "https://submarine-3d.helix",
+        "http://localhost:3000",
+        "http://localhost:8080"
+      ],
+      "defaultClientScopes": ["web-origins", "role_list", "profile", "roles", "email"],
+      "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
+    },
+    {
+      "clientId": "portainer",
+      "name": "Portainer Container Management",
+      "secret": "portainer-secret",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "redirectUris": ["https://portainer.helix/*"],
+      "webOrigins": ["https://portainer.helix"]
+    },
+    {
+      "clientId": "popeye",
+      "name": "Popeye Kubernetes Validator",
+      "secret": "popeye-secret",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["*"],
+      "webOrigins": ["*"]
+    },
+    {
+      "clientId": "n8n",
+      "name": "N8N Workflow Automation",
+      "secret": "n8n-workflow-secret",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "redirectUris": ["https://n8n.helix/*"],
+      "webOrigins": ["https://n8n.helix"]
+    },
+    {
+      "clientId": "vault",
+      "name": "HashiCorp Vault",
+      "secret": "vault-secret-helix",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "redirectUris": ["https://vault.helix/*"],
+      "webOrigins": ["https://vault.helix"]
+    },
+    {
+      "clientId": "traefik",
+      "name": "Traefik Dashboard",
+      "secret": "traefik-dashboard-secret",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "redirectUris": ["https://traefik.helix/*"],
+      "webOrigins": ["https://traefik.helix"]
+    },
+    {
+      "clientId": "adminer",
+      "name": "Adminer Database Manager",
+      "secret": "adminer-secret",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "redirectUris": ["https://adminer.helix/*"],
+      "webOrigins": ["https://adminer.helix"]
+    },
+    {
+      "clientId": "grafana",
+      "name": "Grafana Monitoring",
+      "secret": "grafana-monitoring-secret",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "redirectUris": ["https://grafana.helix/*"],
+      "webOrigins": ["https://grafana.helix"]
+    },
+    {
+      "clientId": "kafka-ui",
+      "name": "Kafka Management UI",
+      "secret": "kafka-ui-secret",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "redirectUris": ["https://kafka.helix/*"],
+      "webOrigins": ["https://kafka.helix"]
+    },
+    {
+      "clientId": "minio",
+      "name": "MinIO Object Storage",
+      "secret": "minio-storage-secret",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "redirectUris": ["https://minio.helix/*"],
+      "webOrigins": ["https://minio.helix"]
+    },
+    {
+      "clientId": "welcome-app",
+      "name": "Helix Welcome Application",
+      "secret": "helix-welcome-secret",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "redirectUris": ["https://welcome.helix/*"],
+      "webOrigins": ["https://welcome.helix"]
+    }
+  ],
+  "clientScopes": [
+    {
+      "name": "submarine-roles",
+      "description": "Submarine Empire specific roles",
+      "protocol": "openid-connect",
+      "attributes": {
+        "consent.screen.text": "${submarineRolesScopeConsentText}",
+        "display.on.consent.screen": "true"
+      },
+      "protocolMappers": [
+        {
+          "name": "submarine realm roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "foo",
+            "access.token.claim": "true",
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String",
+            "multivalued": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "defaultDefaultClientScopes": [
+    "role_list",
+    "profile",
+    "email"
+  ],
+  "defaultOptionalClientScopes": [
+    "offline_access",
+    "address", 
+    "phone",
+    "submarine-roles"
+  ],
+  "browserFlow": "browser",
+  "registrationFlow": "registration",
+  "directGrantFlow": "direct grant",
+  "resetCredentialsFlow": "reset credentials",
+  "clientAuthenticationFlow": "clients",
+  "dockerAuthenticationFlow": "docker auth",
+  "attributes": {
+    "frontendUrl": "https://keycloak.helix",
+    "userProfileEnabled": "false",
+    "clientSessionIdleTimeout": "1800",
+    "clientSessionMaxLifespan": "36000"
+  },
+  "keycloakVersion": "22.0.1",
+  "userManagedAccessAllowed": false,
+  "clientProfiles": {
+    "profiles": []
+  },
+  "clientPolicies": {
+    "policies": []
+  }
+}

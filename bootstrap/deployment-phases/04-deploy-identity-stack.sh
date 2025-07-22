@@ -45,7 +45,7 @@ if ! kubectl get ns >/dev/null 2>&1; then
 fi
 echo "✅ Connected to Kubernetes cluster using context: $CONTEXT_NAME"
 # --- END of KUBECONFIG and Initial Setup ---
-export HELIX_BOOTSTRAP_DIR="$SCRIPT_DIR"
+export HELIX_BOOTSTRAP_DIR="$(dirname "$SCRIPT_DIR")"
 export HELIX_KEYCLOAK_CONFIGS_DIR="$HELIX_BOOTSTRAP_DIR/addon-configs/keycloak"
 echo -e "${CYAN}Helix Bootstrap Directory: ${NC}${BRIGHT_GREEN}$HELIX_BOOTSTRAP_DIR${NC}"
 echo -e "${CYAN}Helix Keycloak Configs Directory: ${NC}${BRIGHT_GREEN}$HELIX_KEYCLOAK_CONFIGS_DIR${NC}"
@@ -156,14 +156,15 @@ fi
 # Load Vault utilities
 # ─────────────────────────────────────────────
 echo "🔧 Loading Vault utilities..."
-# Ensure the vault-utils.sh script exists and is sourced correctly
-if [[ ! -f "./utils/bootstrap/vault-utils.sh" ]]; then
-  echo -e "${RED}❌ Vault utility script not found at: ./utils/bootstrap/vault-utils.sh${NC}"
+# Use absolute path based on SCRIPT_DIR
+VAULT_UTILS_PATH="$SCRIPT_DIR/../../utils/bootstrap/vault-utils.sh"
+if [[ ! -f "$VAULT_UTILS_PATH" ]]; then
+  echo -e "${RED}❌ Vault utility script not found at: $VAULT_UTILS_PATH${NC}"
   echo -e "💡 Ensure you have the correct path and the file exists."
   exit 1
 fi
 
-source "./utils/bootstrap/vault-utils.sh" || { echo "❌ Failed to source vault-utils.sh"; exit 1; }
+source "$VAULT_UTILS_PATH" || { echo "❌ Failed to source vault-utils.sh"; exit 1; }
 echo "🔧 Vault utilities loaded successfully. "
 # ─────────────────────────────────────────────
 # 🔍 Check if Vault is initialized and unsealed
@@ -346,7 +347,8 @@ echo ""
 start_postgres_spinner & SPINNER_PID=$!
 helm upgrade --install "$POSTGRES_RELEASE" bitnami/postgresql \
   --namespace "$NAMESPACE" \
-  -f "$vals" || \
+  -f "$vals" \
+  --timeout 300s || \
   { echo "❌ PostgreSQL helm install failed"; exit 1; }
 ####### PostgreSQL Deployed #########
 # rm -f configs/postgres/postgresql_values.yaml
@@ -431,13 +433,11 @@ echo -e "\n🧼 Cleaning up existing Keycloak deployment..."
 helm uninstall "$KEYCLOAK_RELEASE" -n "$NAMESPACE" || true
 kubectl delete pvc -n "$NAMESPACE" \
   -l app.kubernetes.io/instance="$KEYCLOAK_RELEASE" --ignore-not-found || true
-kubectl delete configmap "${CLUSTER}-theme" -n "$NAMESPACE" --ignore-not-found || true
-kubectl delete configmap "${CLUSTER}-realm-import" -n "$NAMESPACE" --ignore-not-found || true
 
 #############################################
-### 📦 Prepare ConfigMaps for Theme & Realm
+### 📦 Prepare for Keycloak Deployment (Simplified)
 #############################################
-echo -e "\n📦 Creating Keycloak ConfigMaps..."
+echo -e "\n📦 Preparing Keycloak deployment..."
 
 THEME_DIR="${HELIX_KEYCLOAK_CONFIGS_DIR}/themes"
 REALM_JSON="${HELIX_KEYCLOAK_CONFIGS_DIR}/realms/helix-realm.json"
@@ -457,51 +457,23 @@ echo "🐘 Postgres Database: $PG_DATABASE"
 echo "📦 Keycloak Release: $KEYCLOAK_RELEASE"
 echo "📦 Postgres Release: $POSTGRES_RELEASE"
 
-echo "📦 Vault Release: $RELEASE"
-echo "📦 Vault Service DNS: $VAULT_SERVICE_DNS"
-echo "📦 Vault Address: $VAULT_ADDR"
-echo "📦 Vault Pod Name: $VAULT_POD_NAME"
-echo "📦 Vault Token File: $VAULT_ROOT_TOKEN_FILE"
-# Validate theme directory
-if [[ ! -d "$THEME_DIR" ]]; then
-  echo -e "${RED}❌ Theme directory missing: $THEME_DIR${NC}"
-  echo -e "💡 Please ensure your theme exists and is named correctly (e.g. 'helix')"
-  echo -e "🛠️ You may create one here or copy from a template:"
-  echo -e "   mkdir -p \"$THEME_DIR\" && cp -r ./example-theme/* \"$THEME_DIR/\""
-  exit 1
-fi
-
-# Validate realm JSON
-if [[ ! -f "$REALM_JSON" ]]; then
-  echo -e "${RED}❌ Realm JSON file missing: $REALM_JSON${NC}"
-  echo -e "💡 Please ensure you have exported a Keycloak realm JSON or placed it at that location."
-  exit 1
-fi
-
-# Create ConfigMap for theme
-kubectl create configmap "${CLUSTER}-theme" \
-  --from-file="$THEME_DIR" \
-  -n "$NAMESPACE" \
-  --dry-run=client -o yaml | kubectl apply -f - \
-  && echo -e "${GREEN}✅ Theme ConfigMap created.${NC}" \
-  || { echo -e "${RED}❌ Failed to create theme ConfigMap.${NC}"; exit 1; }
-
-# Create ConfigMap for realm
-kubectl create configmap "${CLUSTER}-realm-import" \
-  --from-file=helix-realm.json="$REALM_JSON" \
-  -n "$NAMESPACE" \
-  --dry-run=client -o yaml | kubectl apply -f - \
-  && echo -e "${GREEN}✅ Realm ConfigMap created.${NC}" \
-  || { echo -e "${RED}❌ Failed to create realm ConfigMap.${NC}"; exit 1; }
-
-
+# Note: Theme and realm will be applied AFTER Keycloak is running via helper scripts
 #############################################
 ### 📝 Generate Helm Values for Keycloak
 #############################################
 echo -e "\n📝 Generating Helm values file for Keycloak..."
 
+# 🛡 Ensure fallback path is set first to avoid unbound errors
+: "${HELIX_KEYCLOAK_CONFIGS_DIR:=./addon-configs/keycloak}"
 KEYCLOAK_VALUES_FILE="${HELIX_KEYCLOAK_CONFIGS_DIR}/keycloak-values.yaml"
 
+# 🔐 Make sure directory exists
+mkdir -p "$(dirname "$KEYCLOAK_VALUES_FILE")"
+
+# 🧾 Inform user
+echo "📄 Writing Helm values to: $KEYCLOAK_VALUES_FILE"
+
+# 🧪 Write Helm values directly - SIMPLIFIED VERSION (no complex themes/realm import)
 cat >"$KEYCLOAK_VALUES_FILE" <<EOF
 auth:
   adminUser: "${KC_ADMIN}"
@@ -527,29 +499,6 @@ ingress:
 
 proxy: edge
 
-extraEnvVars:
-  - name: KEYCLOAK_IMPORT
-    value: "/opt/keycloak/addon-configs/helix-realm.json"
-  - name: KEYCLOAK_THEME
-    value: "${CLUSTER}"
-
-extraVolumes:
-  - name: ${CLUSTER}-theme
-    configMap:
-      name: ${CLUSTER}-theme
-  - name: ${CLUSTER}-realm-import
-    configMap:
-      name: ${CLUSTER}-realm-import
-
-extraVolumeMounts:
-  - name: ${CLUSTER}-theme
-    mountPath: /opt/keycloak/themes/${CLUSTER}
-    readOnly: true
-  - name: ${CLUSTER}-realm-import
-    mountPath: /opt/keycloak/addon-configs/helix-realm.json
-    subPath: helix-realm.json
-    readOnly: true
-
 resources:
   requests:
     memory: "1Gi"
@@ -562,16 +511,20 @@ readinessProbe:
   httpGet:
     path: /
     port: 8080
-  initialDelaySeconds: 33
+  initialDelaySeconds: 30
   periodSeconds: 10
-  timeoutSeconds: 3
+  timeoutSeconds: 5
   successThreshold: 1
-  failureThreshold: 10
+  failureThreshold: 3
 EOF
 
+# ✅ Confirm
 echo -e "${GREEN}✅ Helm values file written to:${NC} $KEYCLOAK_VALUES_FILE"
-yq . "$KEYCLOAK_VALUES_FILE"
-
+if command -v yq &>/dev/null; then
+  yq . "$KEYCLOAK_VALUES_FILE"
+else
+  cat "$KEYCLOAK_VALUES_FILE"
+fi
 #############################################
 ### 🚀 Deploy Keycloak via Helm
 #############################################
@@ -597,6 +550,38 @@ if ! kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=keycloak \
   -n "$NAMESPACE" --timeout=300s; then
   echo -e "${RED}❌ Keycloak pod did not become ready in time!${NC}"
   exit 1
+fi
+
+echo -e "${GREEN}✅ Keycloak is running! Now configuring realm and themes...${NC}"
+
+#############################################
+### 🏰 Import Realm via Helper Script
+#############################################
+echo -e "\n🏰 Importing Helix realm..."
+REALM_IMPORT_SCRIPT="$SCRIPT_DIR/../addon-configs/keycloak/import-realm.sh"
+if [[ -f "$REALM_IMPORT_SCRIPT" ]]; then
+  chmod +x "$REALM_IMPORT_SCRIPT"
+  "$REALM_IMPORT_SCRIPT" "$CLUSTER" "$NAMESPACE" || {
+    echo -e "${YELLOW}⚠️ Realm import failed, but continuing...${NC}"
+  }
+else
+  echo -e "${YELLOW}⚠️ Realm import script not found at: $REALM_IMPORT_SCRIPT${NC}"
+  echo -e "💡 Skipping realm import - you can do this manually later"
+fi
+
+#############################################
+### 🎨 Apply Theme via Helper Script  
+#############################################
+echo -e "\n🎨 Applying Helix theme..."
+THEME_APPLY_SCRIPT="$SCRIPT_DIR/../addon-configs/keycloak/apply-theme.sh"
+if [[ -f "$THEME_APPLY_SCRIPT" ]]; then
+  chmod +x "$THEME_APPLY_SCRIPT"
+  "$THEME_APPLY_SCRIPT" "$CLUSTER" "$NAMESPACE" || {
+    echo -e "${YELLOW}⚠️ Theme application failed, but continuing...${NC}"
+  }
+else
+  echo -e "${YELLOW}⚠️ Theme apply script not found at: $THEME_APPLY_SCRIPT${NC}"
+  echo -e "💡 Skipping theme application - you can do this manually later"
 fi
 
 #############################################

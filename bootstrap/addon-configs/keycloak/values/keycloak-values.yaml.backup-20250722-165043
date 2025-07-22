@@ -20,8 +20,6 @@ ingress:
     cert-manager.io/cluster-issuer: mkcert-ca-issuer
 proxy: edge
 extraEnvVars:
-  - name: KC_START_MODE
-    value: "production"
   - name: KEYCLOAK_IMPORT
     value: "/opt/keycloak/configs/helix-realm.json"
   - name: KC_SPI_THEME_DEFAULT

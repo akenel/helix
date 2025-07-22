@@ -1,0 +1,588 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: helix-theme
+  namespace: identity
+data:
+  # Login theme files
+  login--theme.properties: |
+    parent=keycloak
+  
+  login--login.ftl: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <title>🧱 Helix Login</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="stylesheet" href="resources/styles.css" />
+    </head>
+    <body class="dark">
+
+      <div class="login-container">
+        <div class="login-box">
+
+          <!-- Logo -->
+          <div class="helix-logo">
+            <svg width="48" height="48" viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="30" stroke="#00d9ff" stroke-width="4"/>
+              <path d="M20 44 C30 34, 34 30, 44 20" stroke="#00d9ff" stroke-width="4" fill="none"/>
+              <path d="M20 20 C30 30, 34 34, 44 44" stroke="#00d9ff" stroke-width="4" fill="none"/>
+            </svg>
+          </div>
+
+          <h1>🧱 Welcome to Helix</h1>
+
+          <!-- Message -->
+          <#if message?has_content>
+            <div class="alert ${message.type}">
+              ${message.summary}
+            </div>
+          </#if>
+
+          <!-- Login Form -->
+          <form id="kc-form-login" action="${url.loginAction}" method="post">
+            <div class="form-group">
+              <label for="username">Username</label>
+              <input tabindex="1" id="username" name="username" type="text" autofocus />
+            </div>
+            <div class="form-group">
+              <label for="password">Password</label>
+              <input tabindex="2" id="password" name="password" type="password" />
+            </div>
+            <input tabindex="3" type="submit" value="Login" />
+          </form>
+
+          <!-- Links -->
+          <div class="links">
+            <#if realm.registrationAllowed?? && realm.registrationAllowed>
+              <a href="${url.registrationUrl}">📝 Register</a>
+            </#if>
+            <#if realm.resetPasswordAllowed?? && realm.resetPasswordAllowed>
+              <a href="${url.loginResetCredentialsUrl}">🔑 Forgot Password?</a>
+            </#if>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Theme Toggle Button -->
+      <div class="theme-toggle">
+        <button id="toggle-theme" aria-label="Toggle Dark/Light Mode">🌗 Toggle Theme</button>
+      </div>
+
+      <!-- Theme Script -->
+      <script>
+        const toggleButton = document.getElementById('toggle-theme');
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        function setTheme(theme) {
+          document.body.classList.remove('dark', 'light');
+          document.body.classList.add(theme);
+          localStorage.setItem('theme', theme);
+        }
+
+        const stored = localStorage.getItem('theme');
+        if (stored === 'light' || stored === 'dark') {
+          setTheme(stored);
+        } else {
+          setTheme(prefersDark ? 'dark' : 'light');
+        }
+
+        toggleButton.addEventListener('click', () => {
+          const isDark = document.body.classList.contains('dark');
+          setTheme(isDark ? 'light' : 'dark');
+        });
+      </script>
+
+    </body>
+    </html>
+
+  login--resources--styles.css: |
+    /* Base styles */
+    body {
+      background-color: #0a0a0a;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+    }
+
+    /* Theme variations */
+    body.dark {
+      background-color: #0a0a0a;
+      color: #e0e0e0;
+    }
+
+    body.light {
+      background-color: #f5f5f5;
+      color: #333;
+    }
+
+    body.light .login-container,
+    body.light .account-container {
+      background-color: #ffffff;
+      color: #333;
+      box-shadow: 0 0 20px rgba(0, 217, 255, 0.2);
+    }
+
+    /* Container styles */
+    .login-container, .account-container {
+      max-width: 500px;
+      margin: 3rem auto;
+      padding: 2rem;
+      background-color: #1a1a1a;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+    }
+
+    /* Login box styles */
+    .login-box {
+      text-align: center;
+    }
+
+    .helix-logo {
+      margin-bottom: 1rem;
+    }
+
+    .helix-logo svg {
+      display: block;
+      margin: 0 auto;
+    }
+
+    /* Header styles */
+    h1, h2 {
+      color: #00d9ff;
+      text-align: center;
+      margin: 1rem 0;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 2rem;
+    }
+
+    /* Form styles */
+    .form-group {
+      margin-bottom: 1rem;
+      text-align: left;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #00d9ff;
+      font-weight: 500;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="email"],
+    input[type="submit"] {
+      display: block;
+      width: 100%;
+      margin: 0.75rem 0;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="email"] {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: #e0e0e0;
+      border: 1px solid rgba(0, 217, 255, 0.3);
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    input[type="email"]:focus {
+      outline: none;
+      border-color: #00d9ff;
+      box-shadow: 0 0 5px rgba(0, 217, 255, 0.5);
+    }
+
+    input[type="submit"] {
+      background-color: #00d9ff;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin-top: 1rem;
+    }
+
+    input[type="submit"]:hover {
+      background-color: #00a8cc;
+    }
+
+    /* Links styles */
+    .links {
+      margin-top: 2rem;
+      text-align: center;
+    }
+
+    .links a {
+      color: #00d9ff;
+      text-decoration: none;
+      margin: 0 1rem;
+      font-size: 0.9rem;
+      transition: color 0.3s ease;
+    }
+
+    .links a:hover {
+      color: #00a8cc;
+      text-decoration: underline;
+    }
+
+    /* Theme toggle styles */
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+
+    .theme-toggle button {
+      background-color: rgba(0, 217, 255, 0.2);
+      border: 1px solid #00d9ff;
+      color: #00d9ff;
+      padding: 0.5rem 1rem;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+
+    .theme-toggle button:hover {
+      background-color: rgba(0, 217, 255, 0.3);
+      transform: scale(1.05);
+    }
+
+    /* Message styles */
+    .message, .alert {
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 6px;
+      border-left: 4px solid;
+    }
+
+    .message.error, .alert.error {
+      background-color: rgba(255, 77, 77, 0.2);
+      border-left-color: #ff4d4d;
+      color: #ff9999;
+    }
+
+    .message.success, .alert.success {
+      background-color: rgba(40, 167, 69, 0.2);
+      border-left-color: #28a745;
+      color: #66d9a6;
+    }
+
+    .message.warning, .alert.warning {
+      background-color: rgba(255, 193, 7, 0.2);
+      border-left-color: #ffc107;
+      color: #ffda66;
+    }
+
+  # Account theme files
+  account--theme.properties: |
+    parent=keycloak
+
+  account--account.ftl: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <title>🧱 Helix Account Portal</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="stylesheet" href="resources/styles.css" />
+    </head>
+    <body class="dark">
+
+      <div class="account-container">
+
+        <!-- Helix Header -->
+        <div class="account-header">
+          <svg width="48" height="48" viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="30" stroke="#00d9ff" stroke-width="4"/>
+            <path d="M20 44 C30 34, 34 30, 44 20" stroke="#00d9ff" stroke-width="4" fill="none"/>
+            <path d="M20 20 C30 30, 34 34, 44 44" stroke="#00d9ff" stroke-width="4" fill="none"/>
+          </svg>
+          <h2>🧱 Welcome to Helix</h2>
+          <p>Your personalized identity dashboard.</p>
+        </div>
+
+        <!-- Account Info -->
+        <div class="account-summary">
+          <p><strong>Username:</strong> ${account.username}</p>
+          <p><strong>Email:</strong> ${account.email}</p>
+          <#if account.createdTimestamp??>
+            <p><strong>Created:</strong> ${account.createdTimestamp?datetime}</p>
+          </#if>
+        </div>
+
+        <!-- Navigation -->
+        <div class="account-nav">
+          <p>
+            <a href="${url.accountUrl}">🔙 Return to Dashboard</a> |
+            <a href="${url.logoutUrl}">🚪 Logout</a>
+          </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="account-footer">
+          <p>&copy; 2025 Helix Identity. All rights reserved.</p>
+        </div>
+      </div>
+
+      <!-- Theme Toggle Button -->
+      <div class="theme-toggle">
+        <button id="toggle-theme" aria-label="Toggle Dark/Light Mode">🌗 Toggle Theme</button>
+      </div>
+
+      <!-- Theme Script -->
+      <script>
+        const toggleButton = document.getElementById('toggle-theme');
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        function setTheme(theme) {
+          document.body.classList.remove('dark', 'light');
+          document.body.classList.add(theme);
+          localStorage.setItem('theme', theme);
+        }
+
+        // Load saved or system theme
+        const stored = localStorage.getItem('theme');
+        if (stored === 'light' || stored === 'dark') {
+          setTheme(stored);
+        } else {
+          setTheme(prefersDark ? 'dark' : 'light');
+        }
+
+        toggleButton.addEventListener('click', () => {
+          const isDark = document.body.classList.contains('dark');
+          setTheme(isDark ? 'light' : 'dark');
+        });
+      </script>
+
+    </body>
+    </html>
+
+  account--resources--styles.css: |
+    /* Base styles */
+    body {
+      background-color: #0a0a0a;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+    }
+
+    /* Theme variations */
+    body.dark {
+      background-color: #0a0a0a;
+      color: #e0e0e0;
+    }
+
+    body.light {
+      background-color: #f5f5f5;
+      color: #333;
+    }
+
+    body.light .login-container,
+    body.light .account-container {
+      background-color: #ffffff;
+      color: #333;
+      box-shadow: 0 0 20px rgba(0, 217, 255, 0.2);
+    }
+
+    /* Container styles */
+    .login-container, .account-container {
+      max-width: 500px;
+      margin: 3rem auto;
+      padding: 2rem;
+      background-color: #1a1a1a;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+    }
+
+    /* Header styles */
+    .account-header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(0, 217, 255, 0.3);
+    }
+
+    .account-header svg {
+      margin-bottom: 1rem;
+    }
+
+    .account-header h2 {
+      color: #00d9ff;
+      margin: 0.5rem 0;
+      font-size: 1.8rem;
+    }
+
+    .account-header p {
+      color: #b0b0b0;
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    /* Account summary styles */
+    .account-summary {
+      background-color: rgba(0, 217, 255, 0.1);
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      border-left: 4px solid #00d9ff;
+    }
+
+    .account-summary p {
+      margin: 0.5rem 0;
+      font-size: 1rem;
+    }
+
+    .account-summary strong {
+      color: #00d9ff;
+    }
+
+    /* Navigation styles */
+    .account-nav {
+      text-align: center;
+      margin: 1.5rem 0;
+      padding: 1rem;
+      background-color: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+    }
+
+    .account-nav a {
+      color: #00d9ff;
+      text-decoration: none;
+      margin: 0 0.5rem;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    .account-nav a:hover {
+      color: #00a8cc;
+      text-decoration: underline;
+    }
+
+    /* Footer styles */
+    .account-footer {
+      text-align: center;
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      color: #888;
+      font-size: 0.9rem;
+    }
+
+    /* Theme toggle styles */
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+
+    .theme-toggle button {
+      background-color: rgba(0, 217, 255, 0.2);
+      border: 1px solid #00d9ff;
+      color: #00d9ff;
+      padding: 0.5rem 1rem;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+
+    .theme-toggle button:hover {
+      background-color: rgba(0, 217, 255, 0.3);
+      transform: scale(1.05);
+    }
+
+    /* Form styles */
+    h1, h2 {
+      color: #00d9ff;
+      text-align: center;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="email"],
+    input[type="submit"] {
+      display: block;
+      width: 100%;
+      margin: 0.75rem 0;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="email"] {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: #e0e0e0;
+      border: 1px solid rgba(0, 217, 255, 0.3);
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    input[type="email"]:focus {
+      outline: none;
+      border-color: #00d9ff;
+      box-shadow: 0 0 5px rgba(0, 217, 255, 0.5);
+    }
+
+    input[type="submit"] {
+      background-color: #00d9ff;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    input[type="submit"]:hover {
+      background-color: #00a8cc;
+    }
+
+    /* Message styles */
+    .message, .alert {
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 6px;
+      border-left: 4px solid;
+    }
+
+    .message.error, .alert.error {
+      background-color: rgba(255, 77, 77, 0.2);
+      border-left-color: #ff4d4d;
+      color: #ff9999;
+    }
+
+    .message.success, .alert.success {
+      background-color: rgba(40, 167, 69, 0.2);
+      border-left-color: #28a745;
+      color: #66d9a6;
+    }
+
+    .message.warning, .alert.warning {
+      background-color: rgba(255, 193, 7, 0.2);
+      border-left-color: #ffc107;
+      color: #ffda66;
+    }
+
+  # Welcome theme file (needed for main Keycloak page)
+  welcome--theme.properties: |
+    parent=keycloak

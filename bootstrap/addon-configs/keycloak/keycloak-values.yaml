@@ -22,29 +22,6 @@ ingress:
 
 proxy: edge
 
-extraEnvVars:
-  - name: KEYCLOAK_IMPORT
-    value: "/opt/keycloak/addon-configs/helix-realm.json"
-  - name: KEYCLOAK_THEME
-    value: "helix"
-
-extraVolumes:
-  - name: helix-theme
-    configMap:
-      name: helix-theme
-  - name: helix-realm-import
-    configMap:
-      name: helix-realm-import
-
-extraVolumeMounts:
-  - name: helix-theme
-    mountPath: /opt/keycloak/themes/helix
-    readOnly: true
-  - name: helix-realm-import
-    mountPath: /opt/keycloak/addon-configs/helix-realm.json
-    subPath: helix-realm.json
-    readOnly: true
-
 resources:
   requests:
     memory: "1Gi"
@@ -57,8 +34,8 @@ readinessProbe:
   httpGet:
     path: /
     port: 8080
-  initialDelaySeconds: 33
+  initialDelaySeconds: 30
   periodSeconds: 10
-  timeoutSeconds: 3
+  timeoutSeconds: 5
   successThreshold: 1
-  failureThreshold: 10
+  failureThreshold: 3

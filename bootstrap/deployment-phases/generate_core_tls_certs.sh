@@ -9,10 +9,8 @@ SUCCESS() { echo "[$(date +'%Y-%m-%d %H:%M:%S %Z')] [SUCCESS] $1"; }
 ERROR() { echo "[$(date +'%Y-%m-%d %H:%M:%S %Z')] [ERROR] $1" >&2; exit 1; }
 
 # --- Configuration ---
-# Verify this path based on your actual directory structure:
-# If '01b - generate_core_tls_certs.sh' is in 'helix_v3/bootstrap/'
-# and 'services.yaml' is in 'helix_v3/configs/', then '../addon-configs/services.yaml' is correct.
-SERVICES_CONFIG_FILE="wiki/services.yaml"
+# Fixed path to services.yaml file
+SERVICES_CONFIG_FILE="./bootstrap/addon-configs/services.yaml"
 ISSUER_NAME="mkcert-ca-issuer" # Your ClusterIssuer name
 
 INFO "⚡️ Starting core TLS certificate generation for Helix platform services."

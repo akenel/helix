@@ -25,7 +25,13 @@ if [[ ! -f "$ENV_LOADER_PATH" ]]; then
   echo "❌ ERROR: bootstrap_env_loader.sh not found at: $ENV_LOADER_PATH"
   exit 1
 fi
+
+# Save our HELIX_ROOT_DIR before sourcing env loader (which overwrites it)
+SAVED_HELIX_ROOT_DIR="$HELIX_ROOT_DIR"
 source "$ENV_LOADER_PATH"
+# Restore our correct HELIX_ROOT_DIR
+HELIX_ROOT_DIR="$SAVED_HELIX_ROOT_DIR"
+export HELIX_ROOT_DIR
 
 # ─── Validation ────────────────────────────────────────────────
 UTILS_DIR="${SCRIPT_DIR}/utils"
@@ -164,10 +170,12 @@ while true; do
       run_step "04. Deploy Identity Stack" "${DEPLOY_PHASES_DIR}/04-deploy-identity-stack.sh"
       ;;
     6)
-      run_step "05. Bootstrap Keycloak Realm & Theme" "${DEPLOY_PHASES_DIR}/05-bootstrap-keycloak-realm.sh"
+      run_step "05. Bootstrap Keycloak Realm & Theme" "${DEPLOY_PHASES_DIR}/addon-configs/05-bootstrap-keycloak-realm.sh"
       ;;
     7)
-      run_step "06. Deploy Keycloak" "${DEPLOY_PHASES_DIR}/06-deploy-keycloak.sh"
+      run_step "06. Deploy Any Service via YAML" "${DEPLOY_PHASES_DIR}/utils/addons/install-service.sh"
+      run_step "07. Deploy Gateway API Resources" "${DEPLOY_PHASES_DIR}/addon-configs/install-gateway-api.sh"
+      run_step "08. Deploy Gateway API Resources for Services" "${DEPLOY_PHASES_DIR}/addon-configs/helpers/gateway-api.sh"
       ;;
     8)
       run_step "07. Deploy Any Service via YAML" "${DEPLOY_PHASES_DIR}/utils/addons/run_plugins_menu.sh"
