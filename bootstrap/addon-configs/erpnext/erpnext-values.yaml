@@ -1,0 +1,91 @@
+# erpnext-values.yaml - Adjusted for Helix Cluster
+image:
+  repository: frappe/erpnext
+  tag: v15.69.2
+  pullPolicy: IfNotPresent
+
+mariadb:
+  # Keep enabled: true if you want the chart to deploy its own MariaDB
+  # Otherwise, if using an existing external MariaDB, set to false and configure externalDatabase
+  enabled: true
+  auth:
+    rootPassword: erpnext-root-password # Use a strong, unique password
+    username: erpnext
+    password: erpnext-db-password     # Use a strong, unique password
+    replicationPassword: erpnext-repl-password # Use a strong, unique password
+  primary: # Ensure persistence for MariaDB
+    persistence:
+      enabled: true
+      storageClass: standard # Use a default RWO storage class, or your preferred one for MariaDB
+      size: 8Gi # Allocate sufficient size for the database
+
+redis: # Add Redis configuration - ERPNext needs Redis for caching and queues
+  enabled: true
+  master:
+    persistence:
+      enabled: true
+      storageClass: standard # Use a default RWO storage class
+      size: 1Gi
+
+# Persistence for ERPNext application components
+persistence:
+  # The 'worker' volume is typically for the shared 'sites' directory, which requires ReadWriteMany
+  # You MUST have a StorageClass that supports ReadWriteMany (e.g., NFS, CephFS)
+  # Replace 'erpnext-helix-nfs' with the actual RWM-capable StorageClass name in your cluster
+  worker:
+    enabled: true
+    size: 2Gi
+    accessModes:
+      - ReadWriteMany
+    storageClass: erpnext-helix-nfs # <--- IMPORTANT: Verify this StorageClass exists and supports RWM
+
+ingress:
+  enabled: true
+  # Using traefik as ingress class, already set by your k3d setup or specific configuration
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    cert-manager.io/cluster-issuer: mkcert-ca-issuer # Ensure this issuer exists and is configured
+  hosts:
+    - host: erpnext.helix # Adjust this if your cluster's domain is different, e.g., erpnext.yourcluster.com
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    - secretName: erpnext-tls # cert-manager will create this secret
+      hosts:
+        - erpnext.helix # Must match the host above
+
+jobs:
+  createSite:
+    enabled: true
+    siteName: erpnext.helix # Should match the ingress host
+    adminPassword: erpnext-admin-password # Use a strong, unique password for ERPNext admin
+    installApps:
+      - erpnext
+    dbType: mariadb # Confirms usage of MariaDB
+    # Also ensure that host, user, password for DB are correctly picked up by the chart
+    # The chart usually handles this automatically if mariadb.enabled=true
+
+# Add resource requests/limits for better stability, especially for larger deployments
+resources:
+  frappe:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+  mariadb:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  redis:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi

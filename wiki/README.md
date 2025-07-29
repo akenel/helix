@@ -1,5 +1,5 @@
 ## 🎛️ Helix Platform Launcher (`helixctl`)
-
+![alt text](image.png)
 A unified command-line tool to manage and inspect the Helix identity & security platform.
 
 | Command              | Description                                               |

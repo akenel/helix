@@ -217,12 +217,16 @@ ui:
   postStart: []
 
   config: 
-    listener "tcp" {
-      address     = "0.0.0.0:8200"
-      tls_disable = true
-    }
-    ui = true
-    api_addr = "https://vault.helix"
+    api_addr: "https://vault.helix"
+    cluster_addr: "https://vault.helix"
+    storage:
+      - type: "kubernetes"
+        config:
+          namespace: "vault"
+          path: "data/vault"    
+    listener:
+      - type: "tcp"
+        address: "0.0.0.0:8200" 
   extraSecretEnvironmentVars: []
   extraVolumes: []
   volumes: null

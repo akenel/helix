@@ -9,7 +9,7 @@ IFS=$'\n\t'
 # These variables are declared here and used throughout the script and sourced helpers.
 # Initialized empty; populated by parse_args and get_and_validate_plugin_details
 ACTION=""
-DEBUG=false
+export DEBUG=false  # Export so child scripts can access debug mode
 SERVICE=""
 NAME=""
 NAMESPACE=""
@@ -98,8 +98,8 @@ main() {
             get_and_validate_plugin_details "$SERVICE"
             
             # Set FULL_LOG_FILE now that $NAME (plugin name) is available. This needs to be set globally.
-            # The timestamp ensures unique log files for each operation.
-            FULL_LOG_FILE="$LOG_DIR/${NAME}-${ACTION}-$(date +%s).log"
+            # Kid-friendly timestamp: minecraft-install-2025-07-24_14-30-15.log instead of epoch
+            FULL_LOG_FILE="$LOG_DIR/${NAME}-${ACTION}-$(date +%Y-%m-%d_%H-%M-%S).log"
 
             # Perform the specific action based on the ACTION variable
             case "$ACTION" in
@@ -125,6 +125,11 @@ main() {
                     # Only perform validation (dry-run) and report success.
                     validate_helm_command_and_repo
                     print_info "✅ Validation successful for plugin '$NAME'. No changes made."
+                    
+                    # --- Pause to show validation results ---
+                    print_info ""
+                    print_info "🎯 Validation complete! Press Enter to continue or Ctrl+C to exit..."
+                    read -r
                     ;;
                 uninstall)
                     # Perform the uninstall operation.

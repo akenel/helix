@@ -1,0 +1,14 @@
+# traefik-dashboard-cert.yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: traefik-dashboard-cert
+  namespace: kube-system
+spec:
+  secretName: traefik-dashboard-tls
+  commonName: traefik.helix
+  dnsNames:
+    - traefik.helix
+  issuerRef:
+    name: mkcert-ca-issuer   # Use your issuer here
+    kind: ClusterIssuer

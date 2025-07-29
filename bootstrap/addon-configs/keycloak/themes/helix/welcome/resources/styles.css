@@ -1,0 +1,199 @@
+/* Base styles */
+body {
+  background-color: #0a0a0a;
+  color: #e0e0e0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  line-height: 1.6;
+}
+
+/* Theme variations */
+body.dark {
+  background-color: #0a0a0a;
+  color: #e0e0e0;
+}
+
+body.light {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+body.light .welcome-container {
+  background-color: #ffffff;
+  color: #333;
+}
+
+body.light .feature-card {
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 217, 255, 0.2);
+}
+
+/* Welcome container */
+.welcome-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #1a1a1a;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+}
+
+/* Welcome header */
+.welcome-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid rgba(0, 217, 255, 0.3);
+}
+
+.welcome-header svg {
+  margin-bottom: 1rem;
+}
+
+.welcome-header h1 {
+  color: #00d9ff;
+  margin: 1rem 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.welcome-header p {
+  color: #b0b0b0;
+  margin: 0;
+  font-size: 1.2rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Feature grid */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.feature-card {
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 2rem;
+  border-radius: 10px;
+  border-left: 4px solid #00d9ff;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 217, 255, 0.2);
+}
+
+.feature-card h3 {
+  color: #00d9ff;
+  margin: 0 0 1rem 0;
+  font-size: 1.3rem;
+}
+
+.feature-card p {
+  color: #c0c0c0;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Navigation buttons */
+.welcome-nav {
+  text-align: center;
+  margin: 3rem 0;
+}
+
+.btn-primary, .btn-secondary {
+  display: inline-block;
+  padding: 1rem 2rem;
+  margin: 0 1rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background-color: #00d9ff;
+  color: #000;
+}
+
+.btn-primary:hover {
+  background-color: #00a8cc;
+  transform: scale(1.05);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: #00d9ff;
+  border: 2px solid #00d9ff;
+}
+
+.btn-secondary:hover {
+  background-color: rgba(0, 217, 255, 0.1);
+  transform: scale(1.05);
+}
+
+/* Footer */
+.welcome-footer {
+  text-align: center;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.welcome-footer p {
+  margin: 0.5rem 0;
+}
+
+/* Theme toggle styles */
+.theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.theme-toggle button {
+  background-color: rgba(0, 217, 255, 0.2);
+  border: 1px solid #00d9ff;
+  color: #00d9ff;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle button:hover {
+  background-color: rgba(0, 217, 255, 0.3);
+  transform: scale(1.05);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .welcome-container {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+  
+  .welcome-header h1 {
+    font-size: 2rem;
+  }
+  
+  .feature-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .btn-primary, .btn-secondary {
+    display: block;
+    margin: 0.5rem auto;
+    max-width: 200px;
+  }
+}

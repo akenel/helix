@@ -1,8 +1,17 @@
 # ~/helix_v3/bootstrap/addon-configs/portainer/portainer-values.yaml
 persistence:
   enabled: true
-  storageClass: "" # Crucial: "" for default, or name of your specific SC like "longhorn"
-  size: 10Gi
+  storageClass: "local-path"
+  size: 1Gi
 
 agent:
   enabled: true
+
+ingress:
+  enabled: true
+  ingressClassName: traefik
+  hostname: portainer.helix
+  annotations:
+    cert-manager.io/cluster-issuer: mkcert-ca-issuer
+  tls: true
+  tlsSecret: portainer-tls

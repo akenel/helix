@@ -1,0 +1,67 @@
+# 🎮 Minecraft Server - Viral Edition
+# Deploy a Minecraft server faster than booting Windows!
+
+# Core Minecraft Configuration
+minecraftServer:
+  eula: true
+  version: "1.20.4"
+  type: "PAPER"  # Optimized server type
+  maxPlayers: 20
+  motd: "🚀 Helix Minecraft - Deployed in 60 seconds! 🎮"
+  difficulty: normal
+  gameMode: survival
+  pvp: true
+  onlineMode: false  # For easy local testing  
+  memory: "1536M"  # Reduced to 1.5GB to fit within 2GB container limit
+  
+  # Gaming-optimized JVM settings
+  jvmOpts: "-XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1"
+
+# Resource Configuration - Gaming Optimized for Laptop
+resources:
+  requests:
+    memory: "1Gi"     # Reduced from 2Gi for laptop-friendly deployment
+    cpu: "500m"       # Reduced from 1000m to leave room for system
+  limits:
+    memory: "2Gi"     # Reduced from 4Gi - still plenty for Minecraft
+    cpu: "1000m"      # Reduced from 2000m - more sustainable
+
+# Persistence for world saves
+persistence:
+  dataDir:
+    enabled: true
+    Size: "10Gi"
+    storageClass: ""  # Use default storage class
+
+# Service Configuration for Easy Access
+minecraftServerServiceAnnotations:
+  service.beta.kubernetes.io/do-loadbalancer-name: "helix-minecraft"
+
+serviceType: LoadBalancer
+
+# Auto-backup Configuration (Future Enhancement)
+# backups:
+#   enabled: true
+#   schedule: "0 2 * * *"  # Daily at 2 AM
+#   retention: "7d"
+
+# Performance Monitoring
+serviceMonitor:
+  enabled: false  # Enable if Prometheus available
+
+# Gaming-Specific Tweaks
+extraEnv:
+  # Server performance optimizations
+  OVERRIDE_SERVER_PROPERTIES: true
+  VIEW_DISTANCE: "10"
+  SIMULATION_DISTANCE: "10"
+  SPAWN_PROTECTION: "0"
+  ENABLE_WHITELIST: false
+  ENFORCE_WHITELIST: false
+  # Network optimizations
+  NETWORK_COMPRESSION_THRESHOLD: "256"
+  # World generation optimizations  
+  GENERATE_STRUCTURES: true
+  SPAWN_ANIMALS: true
+  SPAWN_MONSTERS: true
+  SPAWN_NPCS: true

@@ -581,7 +581,7 @@ if ! helm upgrade --install "$KEYCLOAK_RELEASE" bitnami/keycloak \
   --namespace "$NAMESPACE" \
   --create-namespace \
   --values "$KEYCLOAK_VALUES_FILE" \
-  --timeout 600s \
+  --timeout 3600s \
   --wait; then
   echo -e "${RED}❌ Helm install failed!${NC}"
   echo "👉 Try running manually with --debug to diagnose:"

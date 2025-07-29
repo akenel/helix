@@ -1,6 +1,5 @@
 #!/bin/bash
 # 🧠 Helix Whip — bootstrap/deployment-phases/00_run_all_steps.sh
-
 # ─── Shell Armor ───────────────────────────────────────────────
 set -euo pipefail
 shopt -s failglob
@@ -25,7 +24,14 @@ if [[ ! -f "$ENV_LOADER_PATH" ]]; then
   echo "❌ ERROR: bootstrap_env_loader.sh not found at: $ENV_LOADER_PATH"
   exit 1
 fi
+
+# Save our HELIX_ROOT_DIR before sourcing env loader (which overwrites it)
+SAVED_HELIX_ROOT_DIR="$HELIX_ROOT_DIR"
+echo "Starting $ENV_LOADER_PATH"
 source "$ENV_LOADER_PATH"
+# Restore our correct HELIX_ROOT_DIR
+HELIX_ROOT_DIR="$SAVED_HELIX_ROOT_DIR"
+export HELIX_ROOT_DIR
 
 # ─── Validation ────────────────────────────────────────────────
 UTILS_DIR="${SCRIPT_DIR}/utils"
@@ -39,23 +45,22 @@ source "${UTILS_DIR}/core/spinner_utils.sh"
 source "${UTILS_DIR}/core/print_helix_banner.sh"
 source "${UTILS_DIR}/core/deploy-footer.sh"
 source "${UTILS_DIR}/core/cluster_info.sh"
-
+# ─── Load Deployment Phases ────────────────────────────────────
 # ─── Start Timer ───────────────────────────────────────────────
 START_TIME=$SECONDS
-
-# ─── Weather + Geo (For Vibes) ─────────────────────────────────
-echo ""
-echo "🌐 Gathering environment info..."
-HOST_IP=$(curl -s ifconfig.me || echo "Unknown")
-LINUX_INFO=$(uname -srvmo)
-DOCKER_VER=$(docker --version 2>/dev/null || echo "Docker not installed")
-CITY=$(curl -s https://ipinfo.io | jq -r '.city // "Unknown"')
-COUNTRY=$(curl -s https://ipinfo.io | jq -r '.country // "Unknown"')
-TEMP=$(curl -s "https://wttr.in/?format=j1" | jq -r '.current_condition[0].temp_C // "N/A"')
-echo "📍 ${CITY}, ${COUNTRY} — 🌡 ${TEMP}°C"
-echo "🐧 ${LINUX_INFO} • 🐳 ${DOCKER_VER}"
-echo ""
-
+# # ─── Weather + Geo (For Vibes) ─────────────────────────────────
+# echo ""
+# echo "🌐 Gathering environment info..."
+# HOST_IP=$(curl -s ifconfig.me || echo "Unknown")
+# LINUX_INFO=$(uname -srvmo)
+# DOCKER_VER=$(docker --version 2>/dev/null || echo "Docker not installed")
+# CITY=$(curl -s https://ipinfo.io | jq -r '.city // "Unknown"')
+# COUNTRY=$(curl -s https://ipinfo.io | jq -r '.country // "Unknown"')
+# TEMP=$(curl -s "https://wttr.in/?format=j1" | jq -r '.current_condition[0].temp_C // "N/A"')
+# echo "📍 ${CITY}, ${COUNTRY} — 🌡 ${TEMP}°C"
+# echo "🐧 ${LINUX_INFO} • 🐳 ${DOCKER_VER}"
+# echo ""
+ 
 # ─── Flags ─────────────────────────────────────────────────────
 DEBUG=false
 SKIP_ERRORS=false
@@ -71,7 +76,7 @@ for arg in "$@"; do
 done
 
 export HELIX_DEBUG="${DEBUG}"
-
+ 
 # ─── Error Handler ─────────────────────────────────────────────
 error() {
   log_error "$1"
@@ -79,7 +84,10 @@ error() {
   echo "📂 CWD: $(pwd)"
   exit 1
 }
-
+# ─── Logging Setup ─────────────────────────────────────────────
+if $DEBUG; then
+  echo "🔍 Debug mode enabled. Verbose logging will be shown."
+fi
 # ─── Run Step Wrapper ──────────────────────────────────────────
 run_step() {
   local name="$1"
@@ -129,12 +137,13 @@ print_menu() {
 }
 
 # ─── Display Banner & Chuck Norris Quote ──────────────────────
-print_helix_banner "${VERSION}" "Deployment Orchestrator"
-cluster_info
-JOKE=$(curl -s https://api.chucknorris.io/jokes/random | jq -r '.value' || echo "Chuck Norris installed Helm by blinking.")
-echo "📣 Chuck Norris: $JOKE"
-echo ""
+# print_helix_banner "${VERSION}" "Deployment Orchestrator"
+# cluster_info
 
+# JOKE=$(curl -s https://api.chucknorris.io/jokes/random | jq -r '.value' || echo "Chuck Norris installed Helm by blinking.")
+# echo "📣 Chuck Norris: $JOKE"
+# echo ""
+# print_deploy_footer
 # ─── Main Menu Loop ────────────────────────────────────────────
 while true; do
   CHOICE=$(print_menu)
@@ -159,7 +168,7 @@ while true; do
       ;;
     4)
       run_step "03. Bootstrap Vault & Unseal" "${DEPLOY_PHASES_DIR}/03-vault-bootstrap-unseal.sh"
-      ;;
+    ;;
     5)
       run_step "04. Deploy Identity Stack" "${DEPLOY_PHASES_DIR}/04-deploy-identity-stack.sh"
       ;;
@@ -167,7 +176,7 @@ while true; do
       run_step "05. Bootstrap Keycloak Realm & Theme" "${DEPLOY_PHASES_DIR}/05-bootstrap-keycloak-realm.sh"
       ;;
     7)
-      run_step "06. Deploy Keycloak" "${DEPLOY_PHASES_DIR}/06-deploy-keycloak.sh"
+      run_step "06. Deploy Any Service via YAML" "${DEPLOY_PHASES_DIR}/utils/addons/install-service.sh"
       ;;
     8)
       run_step "07. Deploy Any Service via YAML" "${DEPLOY_PHASES_DIR}/utils/addons/run_plugins_menu.sh"
@@ -176,8 +185,8 @@ while true; do
       run_step "Cluster Health Check" "${DEPLOY_PHASES_DIR}/cluster-health-check.sh"
       ;;
     A)
-      "${DEPLOY_PHASES_DIR}/check-keycloak-integrity.sh"
-      ;;
+      run_step "Keycloak Integrity Check" "${DEPLOY_PHASES_DIR}/check-keycloak-integrity.sh"
+    ;;
     B)
       "${DEPLOY_PHASES_DIR}/run_plugins_menu.sh"
       ;;
@@ -205,3 +214,4 @@ echo " - Traefik:     https://traefik.helix/dashboard/"
 echo " - Portal:      https://portal.helix"
 
 print_deploy_footer
+sleep 10
