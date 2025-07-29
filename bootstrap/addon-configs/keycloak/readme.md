@@ -1,4 +1,11 @@
 🧭 Your Big Picture (Summed Up)
+| Tool / Project          | Description                | Dev Experience Focus | Security Built-In | Realm/Vault Ready |
+| ----------------------- | -------------------------- | -------------------- | ----------------- | ----------------- |
+| **Minikube**            | Single-node K8s            | No                   | No                | No                |
+| **Kind / k3d**          | Base cluster               | No                   | No                | No                |
+| **Portainer**           | Dashboard/UI               | Some                 | No                | No                |
+| **Terraform Modules**   | Infrastructure Infra       | DevOps-level         | Maybe             | Not dev-oriented  |
+| **Your Helix Platform** | 🔥 Dev-ready PaaS-in-a-box | ✅ Yes                | ✅ Yes             | ✅ Fully scripted  |
 
 ## 🔐 Keycloak Admin CLI Setup
 ```bash

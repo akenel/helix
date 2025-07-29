@@ -5,13 +5,11 @@ DRY_RUN=false
 VERBOSE=false
 
 # Ensure correct kubeconfig is used
-export KUBECONFIG="${KUBECONFIG:-/home/angel/.helix/kubeconfig.yaml}"
+export KUBECONFIG="${KUBECONFIG:-$HOME/.helix/kubeconfig.yaml}"
 kubectl config use-context helix >/dev/null 2>&1 || {
   echo "❌ Unable to connect to Kubernetes API. Check kubeconfig or cluster status."
   exit 1
 }
-
-
 # === Configuration Variables (Defaults, can be overridden) ===
 SERVICE=""
 CLUSTER_NAME="" # New: To be discovered or prompted
@@ -23,7 +21,6 @@ K8S_RESOURCE_TYPE="deployment" # Default, can be 'statefulset'
 CERT_DIR=""
 INGRESS_NAME=""
 PORT="" # Kubernetes service port
-
 # === Logging Functions ===
 log_info() { echo -e "[INFO] $*"; }
 log_success() { echo -e "\e[32m[SUCCESS]\e[0m $*"; }

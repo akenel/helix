@@ -28,9 +28,9 @@ plugins:
     helm_chart_repo: "portainer"
     helm_chart_name: "portainer"
     helm_chart_version: "1.0.69"
-    helm_release_name_override: "my-portainer" # Will still be stripped by normalize_helm_command to 'portainer' by default
+    # helm_release_name_override: Use plugin name 'portainer' directly
     # Option 2: Fallback helm_install_cmd (if explicit fields above are missing or incomplete)
-    helm_install_cmd: helm install my-portainer portainer/portainer --version 1.0.69
+    helm_install_cmd: helm install portainer portainer/portainer --version 1.0.69
     default_storage_class: "local-path" # Example
     notes: |
       1. Portainer web UI will be available at:
@@ -38,3 +38,68 @@ plugins:
       2. Default credentials:
          Username: admin
          Password: [set at first login]
+
+  - name: kong
+    emoji: 🦍
+    description: "Cloud-native API Gateway and Service Mesh"
+    enabled: true
+    namespace: kong
+    values_file: bootstrap/addon-configs/kong/kong-values.yaml
+    artifacthub_url: https://artifacthub.io/packages/helm/kong/kong
+    helm_chart_repo: "kong"
+    helm_chart_name: "kong"
+    helm_chart_version: "2.41.1"
+    default_storage_class: "local-path"
+    notes: |
+      1. Kong Gateway Admin API:
+         http://<cluster-ip>:8001
+      2. Kong Gateway Proxy:
+         HTTP: http://<cluster-ip>:8000
+         HTTPS: https://<cluster-ip>:8443
+      3. Kong Manager (Enterprise):
+         http://<cluster-ip>:8002
+
+  - name: kafka
+    emoji: 📡
+    description: "Event streaming platform for high-throughput data pipelines"
+    enabled: true
+    namespace: kafka
+    values_file: bootstrap/addon-configs/kafka/kafka-deploy-values.yaml
+    artifacthub_url: https://artifacthub.io/packages/helm/bitnami/kafka
+    helm_chart_repo: "bitnami"
+    helm_chart_name: "kafka"
+    helm_chart_version: "30.1.8"
+    default_storage_class: "local-path"
+    notes: |
+      1. Kafka Cluster Access:
+         Internal: kafka.kafka.svc.cluster.local:9092
+         External: localhost:9094 (NodePort)
+      2. Kafka Topics:
+         kubectl exec -it kafka-0 -n kafka -- kafka-topics.sh --list --bootstrap-server localhost:9092
+      3. ZooKeeper:
+         kafka-zookeeper.kafka.svc.cluster.local:2181
+
+  - name: minecraft
+    emoji: 🎮
+    description: "60-Second Minecraft Server - Faster than booting Windows!"
+    enabled: true
+    namespace: minecraft
+    values_file: bootstrap/addon-configs/gaming/minecraft/values.yaml
+    artifacthub_url: https://artifacthub.io/packages/helm/minecraft-server/minecraft
+    helm_chart_repo: "minecraft-server-charts"
+    helm_chart_name: "minecraft"
+    helm_chart_version: "4.26.4"
+    default_storage_class: "local-path"
+    notes: |
+      1. 🎮 Minecraft Server Ready!
+         Server IP: kubectl get svc -n minecraft minecraft-minecraft -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+         Port: 25565
+      2. 📱 Share with friends: <server-ip>:25565
+      3. 🎯 Server Info:
+         - Version: 1.20.4 (Paper)
+         - Max Players: 20
+         - Game Mode: Survival
+         - MOTD: "🚀 Helix Minecraft - Deployed in 60 seconds! 🎮"
+      4. 📊 Management:
+         Logs: kubectl logs -n minecraft deployment/minecraft-minecraft -f
+         Restart: kubectl rollout restart deployment/minecraft-minecraft -n minecraft

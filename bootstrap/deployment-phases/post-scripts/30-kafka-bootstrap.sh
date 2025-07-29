@@ -4,7 +4,8 @@ set -e
 echo "✨━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━✨"
 echo "🚀 Kafka to build real-time pipelines    🧱"
 echo "✨━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━✨"
-export KUBECONFIG="${KUBECONFIG:-/home/angel/.helix/kubeconfig.yaml}"
+KUBECONFIG_PATH="${KUBECONFIG:-$HOME/.helix/kubeconfig.yaml}"
+export KUBECONFIG="$KUBECONFIG_PATH"
 kubectl config use-context helix >/dev/null 2>&1 || {
   echo "❌ Unable to connect to Kubernetes API. Check kubeconfig or cluster status."
   exit 1

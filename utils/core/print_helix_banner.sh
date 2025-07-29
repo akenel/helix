@@ -30,9 +30,9 @@ print_helix_banner() {
 EOF
     # Interpolated metadata banner - Bold Cyan for main info, Green for subtitle
     echo -e "\e[1;36m" # Bold Cyan
-    echo "🎛️  H E L I X \e[1;33m${version}\e[1;36m  🐳" # Bold Yellow for version
-    echo " \e[1;32m• ${subtitle} •\e[1;36m" # Bold Green for subtitle
-    echo "─────────────────────────────────────────────"
-    echo "🕒  ${timestamp} • 🧬 Git:${git_sha}"
+    echo -e "🎛️  H E L I X \e[1;33m${version}\e[1;36m  🐳" # Bold Yellow for version
+    echo -e " \e[1;32m• ${subtitle} •\e[1;36m" # Bold Green for subtitle
+    echo -e "─────────────────────────────────────────────"
+    echo -e "🕒  ${timestamp} • 🧬 Git:${git_sha}"
     echo -e "\e[0m" # Reset colors
 }

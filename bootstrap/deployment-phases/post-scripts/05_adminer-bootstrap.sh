@@ -1,6 +1,6 @@
 #!/bin/bash
 # bootstrap/05_adminer-bootstrap.sh
-export KUBECONFIG="${KUBECONFIG:-/home/angel/.helix/kubeconfig.yaml}"
+export KUBECONFIG="${KUBECONFIG:-$HOME/.helix/kubeconfig.yaml}"
 CONTEXT_NAME=$(kubectl config current-context 2>/dev/null || echo "")
 if [[ -z "$CONTEXT_NAME" ]]; then
   echo "❌ No valid Kubernetes context found in kubeconfig ($KUBECONFIG)"

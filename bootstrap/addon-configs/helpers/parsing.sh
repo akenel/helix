@@ -51,7 +51,10 @@ parse_args() {
                 fi
                 SERVICE="$2"; shift # Set SERVICE global and consume the argument.
                 ;;
-            --debug) DEBUG=true ;; # Enable debug mode.
+            --debug) 
+                export DEBUG=true
+                echo "🐛 DEBUG MODE ENABLED" >&2
+                ;; # Enable debug mode and export for child scripts.
             --help) print_usage; exit 0 ;; # Display usage and exit.
             *) print_error "Unknown option: $1" "Run with --help for usage." 1 ;; # Handle unknown options.
         esac
@@ -84,18 +87,36 @@ normalize_helm_command() {
     local expected_name="$2"      # e.g., 'portainer' (from .name)
     local expected_namespace="$3" # e.g., 'portainer' (from .namespace)
     local cmd_type="$4"           # 'install' or 'upgrade'
-
-    # Only print normalization info if debug is on
+    
+    # Ensure the command type is valid
+    if [[ "$cmd_type" != "install" && "$cmd_type" != "upgrade" ]]; then
+        print_error "Invalid command type: '$cmd_type'. Must be 'install' or 'upgrade'." "Check the command type passed to normalize_helm_command." 1   
+    fi
+    # Ensure the expected name and namespace are provided
+    if [[ -z "$expected_name" || -z "$expected_namespace" ]]; then
+        print_error "Expected name and namespace must be provided for Helm command normalization." \
+                    "Check the arguments passed to normalize_helm_command." 1   
+    fi
+    # Ensure the raw command is not empty
+    if [[ -z "$raw_cmd" ]]; then
+        print_error "Raw Helm command cannot be empty." "Provide a valid Helm command string." 1
+    fi
+    # Basic validation - ensure command starts with helm
+    if [[ ! "$raw_cmd" =~ ^helm ]]; then
+        print_error "Invalid Helm command format: '$raw_cmd'." "Command must start with 'helm'." 1
+    fi
+    
+    # Debug info
     $DEBUG && print_info "⚙️ Normalizing Helm $cmd_type command: '$raw_cmd'"
-
+    $DEBUG && print_info "📋 Raw command length: ${#raw_cmd} characters"
+    
     # Convert the command string into an array of arguments for easier processing.
-    # Using 'read -r -a' with IFS for robust splitting, preserving quoted arguments.
     local -a cmd_args
     read -r -a cmd_args <<< "$raw_cmd"
+    
+    $DEBUG && print_info "📊 Command parsed into ${#cmd_args[@]} arguments: ${cmd_args[*]}"
 
-    local new_cmd_args=() # Array to build the normalized command
     local current_arg_index=0
-
     local parsed_action=""
     local parsed_release_name=""
     local parsed_chart_ref=""
@@ -103,29 +124,27 @@ normalize_helm_command() {
     local has_explicit_namespace=false
 
     # Parse the initial fixed parts of the Helm command: helm <action> <release_name> <chart_ref>
-    if [[ "${cmd_args[0]}" == "helm" ]]; then
-        new_cmd_args+=("helm")
+    if [[ ${#cmd_args[@]} -gt 0 && "${cmd_args[0]}" == "helm" ]]; then
         current_arg_index=1 # Start after "helm"
     else
         print_error "Invalid Helm command format: '$raw_cmd'." "Command must start with 'helm'." 1
     fi
 
-    if [[ "${cmd_args[$current_arg_index]}" == "install" || "${cmd_args[$current_arg_index]}" == "upgrade" ]]; then
+    if [[ ${#cmd_args[@]} -gt $current_arg_index && ("${cmd_args[$current_arg_index]}" == "install" || "${cmd_args[$current_arg_index]}" == "upgrade") ]]; then
         parsed_action="${cmd_args[$current_arg_index]}"
-        new_cmd_args+=("$cmd_type") # Use the cmd_type passed into the function (install/upgrade)
         current_arg_index=$((current_arg_index + 1))
     else
         print_error "Invalid Helm command format: '$raw_cmd'." "Command must specify 'install' or 'upgrade' action." 1
     fi
 
-    if [[ -n "${cmd_args[$current_arg_index]}" ]]; then
+    if [[ ${#cmd_args[@]} -gt $current_arg_index && -n "${cmd_args[$current_arg_index]}" ]]; then
         parsed_release_name="${cmd_args[$current_arg_index]}"
         current_arg_index=$((current_arg_index + 1))
     else
         print_error "Invalid Helm command format: '$raw_cmd'." "Release name is missing." 1
     fi
 
-    if [[ -n "${cmd_args[$current_arg_index]}" ]]; then
+    if [[ ${#cmd_args[@]} -gt $current_arg_index && -n "${cmd_args[$current_arg_index]}" ]]; then
         parsed_chart_ref="${cmd_args[$current_arg_index]}"
         current_arg_index=$((current_arg_index + 1))
     else
@@ -135,59 +154,42 @@ normalize_helm_command() {
     # --- Normalize Release Name ---
     local effective_release_name="$parsed_release_name"
     if [[ "$parsed_release_name" == "my-$expected_name" ]]; then
-        $DEBUG && print_info "Stripping 'my-' prefix from release name '$parsed_release_name'. Using '$expected_name'."
+        $DEBUG && print_info "🔧 Stripping 'my-' prefix from release name '$parsed_release_name'. Using '$expected_name'."
         effective_release_name="$expected_name"
     elif [[ "$parsed_release_name" != "$expected_name" ]]; then
-        $DEBUG && print_info "Helm release name '$parsed_release_name' in config does not match expected plugin name '$expected_name'. Forcing to '$expected_name'."
+        $DEBUG && print_info "🔧 Helm release name '$parsed_release_name' in config does not match expected plugin name '$expected_name'. Forcing to '$expected_name'."
         effective_release_name="$expected_name"
     fi
-    new_cmd_args+=("$effective_release_name") # Add the normalized release name
-    new_cmd_args+=("$parsed_chart_ref")       # Add the chart reference
 
-    # Process remaining arguments (flags)
+    # Start building the final command
+    local final_cmd="helm $cmd_type $effective_release_name $parsed_chart_ref"
+
+    # Process remaining arguments (flags) with safe array access
     for (( i=current_arg_index; i<${#cmd_args[@]}; i++ )); do
         local arg="${cmd_args[$i]}"
-        local next_arg="${cmd_args[$((i+1))]}" # Get next arg for flag values
+        local next_arg=""
+        
+        # Safely get next argument if it exists
+        if [[ $((i+1)) -lt ${#cmd_args[@]} ]]; then
+            next_arg="${cmd_args[$((i+1))]}"
+        fi
 
         if [[ "$arg" == "--namespace" ]]; then
             has_explicit_namespace=true
             i=$((i+1)) # Skip the next argument (the namespace value)
-            $DEBUG && print_info "Removed existing '--namespace ${cmd_args[$i]}' from command."
+            $DEBUG && print_info "🗑️ Removed existing '--namespace ${cmd_args[$i]}' from command."
         elif [[ "$arg" == "--version" ]]; then
-            parsed_version_flag="$arg ${next_arg}" # Capture flag and its value
-            i=$((i+1)) # Skip the next argument (the version value)
-            # We will add this later explicitly to ensure order
+            if [[ -n "$next_arg" ]]; then
+                parsed_version_flag="$arg $next_arg" # Capture flag and its value
+                i=$((i+1)) # Skip the next argument (the version value)
+            else
+                parsed_version_flag="$arg" # Just the flag if no value
+            fi
         else
             # Add all other arguments as they are
-            new_cmd_args+=("$arg")
+            final_cmd+=" $arg"
         fi
     done
-
-    # --- Reconstruct the command with desired order ---
-    local final_cmd_components=("helm" "$cmd_type" "$effective_release_name" "$parsed_chart_ref")
-
-    # Add version flag if it was found
-    if [[ -n "$parsed_version_flag" ]]; then
-        final_cmd_components+=("$parsed_version_flag")
-    fi
-
-    # Always add our desired namespace flag
-    final_cmd_components+=("--namespace")
-    final_cmd_components+=("$expected_namespace")
-
-    # Add any other remaining arguments
-    for arg_comp in "${new_cmd_args[@]}"; do
-        # Only add components that are not the initial fixed parts already added
-        # This is a bit redundant with the initial loop, let's simplify.
-        # The new_cmd_args already contains all non-fixed args and excludes namespace/version.
-        # So we just need to add what's left in new_cmd_args.
-        # Re-evaluating the new_cmd_args construction for clarity.
-        : # No-op, will re-evaluate below.
-    done
-
-    # Simplified reconstruction:
-    # Start with helm, action, release_name, chart_ref
-    local final_cmd="helm $cmd_type \"$effective_release_name\" \"$parsed_chart_ref\""
 
     # Add version flag if it was found
     if [[ -n "$parsed_version_flag" ]]; then
@@ -195,28 +197,11 @@ normalize_helm_command() {
     fi
 
     # Always add our desired namespace flag
-    final_cmd+=" --namespace \"$expected_namespace\""
+    final_cmd+=" --namespace $expected_namespace"
 
-    # Add any other remaining arguments that were not version or namespace
-    for (( i=current_arg_index; i<${#cmd_args[@]}; i++ )); do
-        local arg="${cmd_args[$i]}"
-        if [[ "$arg" != "--namespace" && "$arg" != "--version" ]]; then
-            # Check if it's a flag value (e.g., after --set)
-            if [[ "$arg" =~ ^-- ]]; then # It's a flag
-                final_cmd+=" \"$arg\""
-            elif [[ "$i" -gt 0 && "${cmd_args[$((i-1))]}" =~ ^-- ]]; then # It's a value for a flag
-                final_cmd+=" \"$arg\""
-            else # It's a regular argument (shouldn't happen after chart_ref)
-                final_cmd+=" \"$arg\""
-            fi
-        fi
-    done
-
-    # Remove any double spaces that might result from concatenations or removals
+    # Remove any double spaces that might result from concatenations
     final_cmd=$(echo "$final_cmd" | tr -s ' ')
-
-    $DEBUG && print_info "Normalized Helm $cmd_type command: '$final_cmd'"
-    echo "$final_cmd" # Return the normalized command
+    echo "$final_cmd"
 }
 
 # --- Wizard for Adding Plugin Entry ---

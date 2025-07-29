@@ -88,8 +88,8 @@ print_summary() {
     echo "💬 Community: https://github.com/akenel/helix"
 
     # --- NEW: Include Kubernetes Client/Server Version Skew Info ---
-    local client_version=$(kubectl version --client -o json | yq -r '.clientVersion.gitVersion // "N/A"')
-    local server_version=$(kubectl version --short -o json | yq -r '.serverVersion.gitVersion // "N/A"')
+    local client_version=$(kubectl version --client -o json 2>/dev/null | yq -r '.clientVersion.gitVersion // "N/A"' 2>/dev/null || echo "N/A")
+    local server_version=$(kubectl version -o json 2>/dev/null | yq -r '.serverVersion.gitVersion // "N/A"' 2>/dev/null || echo "N/A")
     
     echo -e "\n--- Environment Health Check ---"
     echo "Kubectl Client Version: $client_version"
@@ -108,7 +108,7 @@ print_summary() {
         echo "ℹ️  Could not determine kubectl client/server versions for skew check."
     fi
 
-    local helm_version=$(helm version --template '{{.Version}}' // "N/A")
+    local helm_version=$(helm version --template '{{.Version}}' 2>/dev/null || echo "N/A")
     echo "Helm Version: $helm_version"
     # Add more checks here as needed, e.g., yq version, docker version
     echo "YQ Version: $(yq --version | head -n 1)"

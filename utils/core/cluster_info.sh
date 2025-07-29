@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # 🧭 cluster_info.sh — Displays current Kubernetes cluster context information.
 # This script is intended to be sourced by other scripts.
+# utils\core\cluster_info.sh
 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
+echo "Now running utils\core\cluster_info.sh"
 # Source logging utilities if they are not already available
 # This ensures that log_info, log_error, etc. are available for this script.
 # We'll assume spinner_utils.sh is the source for these.
@@ -41,25 +42,17 @@ cluster_info() {
   echo "📍 ${CITY}, ${REGION}, ${COUNTRY} — 🌤  ${TEMP}°C, Wind ${WIND} km/h"
   echo "🐳 Docker: ${DOCKER} • 🐧 Linux: ${LINUX}"
   echo "---------------------------------------------"
-  echo ""
-  echo "🎬 Deployment Summary:"
-  echo "📦 Services:"
-  echo "    🟢 Vault     ⏳"
-  echo "    🟢 Portainer ⏳"
-  echo "    🟢 Postgres  ⏳"
-  echo "    🟢 Keycloak  ⏳"
-  echo "    🟢 Adminer   ⏳"
-  echo "    🟢 Kafka     ⏳"
-  echo "    🟢 Kong      ⏳"
-  echo ""
-  echo "🔐 TLS Chain:"
-  echo "    🔐 mkcert CA         ⏳"
-  echo "    🔐 ClusterIssuer     ⏳"
-  echo "    🔐 Kubeconfig Patched  ⏳"
-  echo ""
-  echo "📊 Secrets:"
-  echo "    🔑 Vault KV          ⏳"
-  echo "    🔑 App Keys Injected ⏳"
+  echo "🔧 Cluster Context: $(kubectl config current-context)"
+  echo "🔗 Cluster Name: $(kubectl config view -o jsonpath='{.clusters[0].name}')"
+  echo "🔍 Cluster API Server: $(kubectl config view -o jsonpath='{.clusters[0].cluster.server}')"
+  echo "---------------------------------------------"
+  echo "🌐 Kubernetes Version: $(kubectl version --short | grep Server | awk '{print $3}')"
+  echo "🔗 Helm Version: $(helm version --template '{{.Version}}')"
+  echo "---------------------------------------------"
+  echo "🧭 Cluster Info Summary:  "
+  echo "   🟢 Current Context: $(kubectl config current-context)"
+  echo "   🟢 Cluster Name: $(kubectl config view -o jsonpath='{.clusters[0].name}')"
+  echo "   🟢 API Server: $(kubectl config view -o jsonpath='{.clusters[0].cluster.server}')"
   echo ""
 }
 

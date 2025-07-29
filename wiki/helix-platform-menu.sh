@@ -40,10 +40,8 @@ else
 fi
 
 declare -A SCRIPTS=(
-  [init_realm]="$UTILS_DIR/04b-keycloak-bootstrap.sh"
-  [init_users]="$UTILS_DIR/04c-keycloak-users.sh"
-  [export_secrets]="$UTILS_DIR/04d-keycloak-client-secrets.sh"
-  [health]="$BOOTSTRAP_DIR/69-cluster-health-check.sh"
+  [health]="$UTILS_DIR/core/cluster-health-check.sh"
+
 )
 
 DEBUG=false

@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Load optional environment file
+ENV_FILE="${ENV_FILE:-bootstrap/support/identity.env}"
+[[ -f "$ENV_FILE" ]] && source "$ENV_FILE"
+
+COMMAND="${1:-}"
+TARGET="${2:-}"
+
+# Helper paths
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+ADDON_CONFIGS_DIR="${SCRIPT_DIR}/addon-configs"
+CONFIG_FILE="${ADDON_CONFIGS_DIR}/config.yaml"
+LOG_DIR="${ADDON_CONFIGS_DIR}/logs"
+ROOT_DIR="$(realpath "${SCRIPT_DIR}/../..")"
+FUNCS_DIR="${SCRIPT_DIR}/functions"
+source \\wsl.localhost\Ubuntu\home\angel\helix_v3\cli\helixctl
+print_random_banner
+# Source function libraries if they exist
+[[ -f "${FUNCS_DIR}/postgres.sh" ]] && source "${FUNCS_DIR}/postgres.sh"
+[[ -f "${FUNCS_DIR}/keycloak.sh" ]] && source "${FUNCS_DIR}/keycloak.sh"
+[[ -f "${FUNCS_DIR}/vault.sh" ]] && source "${FUNCS_DIR}/vault.sh"
+
+# CLI Routing
+case "$COMMAND" in
+  deploy)
+    case "$TARGET" in
+      identity)
+        bash bootstrap/deployment-phases/04_deploy_identity_stack.sh
+        ;;
+      postgres)
+        deploy_postgres
+        store_postgres_secret
+        ;;
+      keycloak)
+        deploy_keycloak
+        store_keycloak_secrets
+        ;;
+      vault)
+        deploy_vault
+        ;;
+      *)
+        echo "❌ Unknown deploy target: $TARGET"
+        ;;
+    esac
+    ;;
+  cleanup)
+    echo "🧹 Cleanup not yet implemented. Try: helixctl cleanup identity"
+    ;;
+  status)
+    echo "📡 Cluster Status:"
+    kubectl get pods -n "${NAMESPACE:-identity}"
+    ;;
+  doctor)
+    echo "🧠 Helix Diagnostic Report"
+    echo "📦 Context: $(kubectl config current-context)"
+    echo "📁 Directory: $(pwd)"
+    echo "📄 ENV_FILE: $ENV_FILE"
+    echo "🔍 Vault Token File: $VAULT_ROOT_TOKEN_FILE"
+    echo "🧪 Kubeconfig: ${KUBECONFIG:-$HOME/.helix/kubeconfig.yaml}"
+    ;;
+  help|"")
+    cat <<EOF
+📦 helixctl – Local Developer Cluster Orchestrator
+
+Usage:
+  helixctl <command> [target]
+
+Commands:
+  deploy identity    → Deploy Vault + Postgres + Keycloak
+  deploy vault       → Deploy Vault only
+  deploy postgres    → Deploy PostgreSQL only
+  deploy keycloak    → Deploy Keycloak only
+  cleanup [target]   → Clean up deployment (coming soon)
+  status             → Show identity pod status
+  doctor             → Diagnostic info
+  help               → Show this help message
+
+Examples:
+  helixctl deploy identity
+  helixctl deploy keycloak
+  helixctl status
+EOF
+    ;;
+  *)
+    echo "❌ Unknown command: $COMMAND"
+    echo "Run 'helixctl help' for usage."
+    exit 1
+    ;;
+esac
+# End of CLI routing

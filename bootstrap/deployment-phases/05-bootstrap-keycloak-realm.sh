@@ -15,7 +15,7 @@ echo "Found Keycloak pod: $KC_POD"
 # Check if the realm already exists to make the script idempotent (optional but good)
 # You might need to adjust the Keycloak admin credentials or get them from a secret
 ADMIN_USER="admin"
-ADMIN_PASS="keycloakadmin" # For dev, ideally from secret for prod
+ADMIN_PASS="admin" # For dev, ideally from secret for prod
 
 # Authenticate and check if realm exists
 REALM_EXISTS=$(kubectl exec -n identity "$KC_POD" -- bash -c "
