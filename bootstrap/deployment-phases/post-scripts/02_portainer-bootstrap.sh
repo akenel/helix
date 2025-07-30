@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # bootstrap\02_portainer-bootstrap.sh
 start_portainer_spinner() {
   local frames=("📦☁️" "🛰️📦" "📦🧭" "🚀📦" "📦🌍")

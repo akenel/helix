@@ -1,5 +1,7 @@
 #!/bin/bash
 set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
+set -euo pipefail
 
 echo "🧨 Uninstalling old Kong release and cleaning up namespace..."
 

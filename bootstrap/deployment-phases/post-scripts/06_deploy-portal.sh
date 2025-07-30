@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # 🧠 Helix Sherlock Bootstrap — bootstrap/06_deploy-portal.sh
 
 shopt -s failglob

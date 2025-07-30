@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 NODE_NAME=$(k3d node list | grep server | awk '{print $1}')
 
 echo "🔍 Checking Keycloak volume mounts inside $NODE_NAME..."

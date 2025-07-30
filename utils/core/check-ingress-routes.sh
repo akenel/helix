@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 
 # Source common configuration and utility functions
 source "$(dirname "${BASH_SOURCE[0]}")/config.sh"

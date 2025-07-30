@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # 📁 tools/safe_path_resolver.sh
 # 🛡️ Resolves and validates critical utility paths.
 

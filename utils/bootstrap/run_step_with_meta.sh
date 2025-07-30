@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # 📜 /home/angel/helix_v3/utils/bootstrap/run_step_with_meta.sh
 # Sherlock-enhanced for bulletproof execution
 

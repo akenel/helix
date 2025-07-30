@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # bootstrap\utils\run_plugins_menu.sh
 set -euo pipefail
 echo "🚀 RUNNING: helix_v3\bootstrap\utils\run_plugins_menu.sh"

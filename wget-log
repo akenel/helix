@@ -1,6 +1,0 @@
---2025-07-23 09:56:02--  https://github.com/derailed/popeye/releases/download/v0.22.1/popeye_Linux_x86_64.tar.gz
-Resolving github.com (github.com)... 140.82.121.4
-Connecting to github.com (github.com)|140.82.121.4|:443... connected.
-HTTP request sent, awaiting response... 404 Not Found
-2025-07-23 09:56:02 ERROR 404: Not Found.
-

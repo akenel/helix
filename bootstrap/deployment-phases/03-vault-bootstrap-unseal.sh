@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # 🧠 Helix Whip — bootstrap/deployment-phases/00_run_all_steps.sh
 
 # ─── Shell Armor ───────────────────────────────────────────────

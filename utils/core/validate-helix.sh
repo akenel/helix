@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 
 # 🥫 Helix Popeye Validation - "Strong to the Finish!"
 # Proves your laptop beats enterprise solutions

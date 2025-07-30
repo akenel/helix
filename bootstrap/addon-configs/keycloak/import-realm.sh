@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # Helper script to import Helix realm into Keycloak
 # Usage: ./import-realm.sh <cluster> <namespace>
 

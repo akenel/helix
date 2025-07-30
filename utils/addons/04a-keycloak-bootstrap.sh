@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 
 # ────────────────────────────────────────────────────────
 # 🔐 Keycloak Realm Bootstrap — Sherlock Edition (v4.0)
