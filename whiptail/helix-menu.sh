@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # \\wsl.localhost\Ubuntu\home\angel\helix_v3\whiptail\helix-menu.sh
 # Source common configuration and utility functions
 HELIX_BOOTSTRAP_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
@@ -241,7 +243,7 @@ while true; do
         8)
             log_info "🩺 Running Cluster Health Check with Live Status..."
             log_info "🎯 Real-time status tracking and Popeye integration!"
-            "${HELIX_BOOTSTRAP_DIR}/utils/core/cluster-health-check.sh"
+            "${HELIX_BOOTSTRAP_DIR}/utils/core/cluster-health-core.sh"
             log_info "✅ Health check complete! All systems monitored!"
             log_info "Press Enter to continue..."
             read -r

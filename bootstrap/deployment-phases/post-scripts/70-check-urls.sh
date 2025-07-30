@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # 🛠️ scripts/70-check-urls.sh – Helix platform sanity checker
 
 set -e

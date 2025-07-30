@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # bootstrap\utils\cert_utils.shh
 ensure_mkcert_tls_secret() {
   local name="$1"

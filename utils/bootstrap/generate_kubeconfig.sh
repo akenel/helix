@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 
 # utils/bootstrap/generate_kubeconfig.sh
 # 🧩 Purpose: Trust mkcert TLS by embedding its root CA into kubeconfig

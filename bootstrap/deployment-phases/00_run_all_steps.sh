@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # 🧠 Helix Whip — bootstrap/deployment-phases/00_run_all_steps.sh
 # ─── Shell Armor ───────────────────────────────────────────────
 set -euo pipefail
@@ -182,7 +184,7 @@ while true; do
       run_step "07. Deploy Any Service via YAML" "${DEPLOY_PHASES_DIR}/utils/addons/run_plugins_menu.sh"
       ;;
     9)
-      run_step "Cluster Health Check" "${DEPLOY_PHASES_DIR}/cluster-health-check.sh"
+      run_step "Cluster Health Check" "${DEPLOY_PHASES_DIR}/cluster-health-deployment.sh"
       ;;
     A)
       run_step "Keycloak Integrity Check" "${DEPLOY_PHASES_DIR}/check-keycloak-integrity.sh"

@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # 🧩 Helix Add-on Installer Template
 # 📜 Usage: ./addon-template.sh [--dry-run] [--debug] [--status]
 # 📦 Scaffold for modular Helm/Kustomize/Kubectl add-ons

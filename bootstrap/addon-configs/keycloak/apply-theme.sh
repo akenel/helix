@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # Helper script to apply Helix theme to Keycloak
 # Usage: ./apply-theme.sh <cluster> <namespace>
 

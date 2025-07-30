@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 
 # 🧪 Keycloak Sanity Check Script — Sherlock’s Magnifying Glass 🕵️‍♂️
 # Verifies Keycloak pod, realm config, and theme mounting.

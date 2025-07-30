@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # 🎩 helix-platform-menu.sh — "The Royal Launcher" ⚔️helix-platform-menu.sh
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 🎛️ Helix Platform Launcher Menu
@@ -40,7 +42,7 @@ else
 fi
 
 declare -A SCRIPTS=(
-  [health]="$UTILS_DIR/core/cluster-health-check.sh"
+  [health]="$UTILS_DIR/core/cluster-health-core.sh"
 
 )
 

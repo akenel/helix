@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # Run via: ./04_deploy_identity_stack.sh
 # Format: Unix (dos2unix 04_deploy_identity_stack.sh)
 set -euo pipefail

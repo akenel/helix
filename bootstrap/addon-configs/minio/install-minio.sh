@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 PLUGIN_NAME="minio"
 PLUGIN_DESC="MinIO: High-performance S3-compatible object store"
   echo "📦 Installing $PLUGIN_DESC..."

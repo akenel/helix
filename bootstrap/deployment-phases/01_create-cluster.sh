@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # 🧠 Helix Whip — bootstrap/deployment-phases/00_run_all_steps.sh
 
 # ─── Shell Armor ───────────────────────────────────────────────
@@ -59,11 +61,32 @@ create_k3d_cluster() {
     local registry_name=$2
     local tls_domains=$3
 
-    # Check if the cluster already exists and delete it if necessary
+    # Check if the cluster already exists and prompt user for action
     if k3d cluster list | grep -q "$cluster_name"; then
-        echo "⚠️  Cluster '$cluster_name' exists. Deleting it for a fresh start..."
-        k3d cluster delete "$cluster_name"
-        echo "✅ Cluster '$cluster_name' deleted."
+        echo "⚠️  Cluster '$cluster_name' already exists."
+        read -p "❓ Do you want to delete and recreate it? (y/n): " confirm
+        if [[ "$confirm" =~ ^[Yy]$ ]]; then
+            echo "🗑️  Deleting cluster '$cluster_name'..."
+            k3d cluster delete "$cluster_name"
+            # Wait for deletion to complete
+            echo -n "⏳ Waiting for cluster to be fully deleted..."
+            for i in {1..20}; do
+                sleep 1
+                if ! k3d cluster list | grep -q "$cluster_name"; then
+                    echo " ✅"
+                    break
+                fi
+                echo -n "."
+                if [[ $i -eq 20 ]]; then
+                    echo -e "\n❌ Cluster '$cluster_name' was not deleted after 20 seconds. Aborting."
+                    return 1
+                fi
+            done
+            echo "✅ Cluster '$cluster_name' deleted."
+        else
+            echo "🚪 Exiting to main menu. Cluster was not deleted."
+            return 0
+        fi
     else
         echo "🌱 No existing cluster named '$cluster_name' found. Proceeding to create it."
     fi

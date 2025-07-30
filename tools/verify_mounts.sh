@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # 🕵️ Sherlock's verify_mounts.sh v1.1
 # ✅ Improved: Checks mounts, handles missing pods, includes banner & debug
 

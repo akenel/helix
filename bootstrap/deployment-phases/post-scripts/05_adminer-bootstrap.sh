@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # bootstrap/05_adminer-bootstrap.sh
 export KUBECONFIG="${KUBECONFIG:-$HOME/.helix/kubeconfig.yaml}"
 CONTEXT_NAME=$(kubectl config current-context 2>/dev/null || echo "")

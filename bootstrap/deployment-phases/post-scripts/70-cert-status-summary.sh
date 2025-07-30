@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # bootstrap/70-cert-status-summary.sh
 # 🔧 Generate a summary of Helix TLS certificates
 

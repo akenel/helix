@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 
 # 🧱 HELIX Service Deployment Script
 # Purpose: Deploy a service via .env + Helm + Ingress

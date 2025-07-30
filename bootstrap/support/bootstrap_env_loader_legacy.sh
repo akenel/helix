@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # 🧠 Helix Environment Loader — Robust Bootstrap for Paths, Env, Info
 # helix_v3\bootstrap\utils\bootstrap_env_loader.sh
 # Ensure this script can be sourced from anywhere

@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # bootstrap\utils\deploy-footer.sh
 # 💠 Deploy Footer Printer
 # Returns ✅ if any pod in the namespace matches the name pattern (wildcard) and is Running, else ❌
