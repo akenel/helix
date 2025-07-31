@@ -28,7 +28,7 @@ Spin up:
 ## ⚡ Quick Start
 
 ```bash
-git clone https://github.com/theSAPspecialist/helix.git
+git clone https://github.com/akenel/helix.git
 cd helix
 ./run.sh
 ```
