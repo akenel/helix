@@ -3,7 +3,7 @@
 > **Secure, TLS-first, modular Kubernetes infra in a single command.**
 > For developers, builders, rebels, and the curious. Built in Bash. Runs on anything.
 
-![Helix Identity Stack](./docs/images/helix-banner.png)
+![Helix Identity Stack](assets/mkcert-k3d-kube-config.png)
 
 ---
 
