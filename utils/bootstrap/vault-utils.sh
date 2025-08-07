@@ -23,7 +23,7 @@ fi
 # These paths must match where 03-vault-bootstrap-unseal.sh saves them.
 # HELIX_BOOTSTRAP_DIR is expected to be exported by 00_run_all_steps.sh
 # Define standard paths for Vault secrets files
-VAULT_CONFIG_DIR="$HOME/helix_v3/bootstrap/addon-configs/vault"
+VAULT_CONFIG_DIR="$HOME/helix/bootstrap/addon-configs/vault"
 VAULT_ENV_FILE="${VAULT_CONFIG_DIR}/vault.env"
 VAULT_ROOT_TOKEN_FILE="${VAULT_CONFIG_DIR}/.vault_root_token"
 echo "🔚 Inside VAULT_ROOT_TOKEN_FILE="${VAULT_CONFIG_DIR}/.vault_root_token""

@@ -2,11 +2,8 @@
 set -euo pipefail
 trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 
-# 🥫 Helix Popeye Validation - "Strong to the Finish!"
+echo "🥫 Helix Popeye Validation - 'Strong to the Finish!'"
 # Proves your laptop beats enterprise solutions
-
-set -euo pipefail
-
 # Colors for viral-worthy output
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'

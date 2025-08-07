@@ -9,7 +9,7 @@ kubectl port-forward svc/medusa 8080:8080
 Then, access to http://localhost:8080
 
 Example 
-angel@LAPTOP-Q5JJGG0L:~/helix_v3$ kubectl create namespace medusa
+angel@LAPTOP-Q5JJGG0L:~/helix$ kubectl create namespace medusa
 helm install medusa oci://registry-1.docker.io/alphayax/medusa --version 1.1.49 -n medusa
 namespace/medusa created
 Pulled: registry-1.docker.io/alphayax/medusa:1.1.49
@@ -37,4 +37,4 @@ NOTES:
   - tvshows   : DISABLED
 
 .
-angel@LAPTOP-Q5JJGG0L:~/helix_v3$
+angel@LAPTOP-Q5JJGG0L:~/helix$

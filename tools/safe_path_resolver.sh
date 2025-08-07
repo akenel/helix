@@ -4,7 +4,7 @@ trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # 📁 tools/safe_path_resolver.sh
 # 🛡️ Resolves and validates critical utility paths.
 
-HELIX_ROOT="${HOME}/helix_v3"
+HELIX_ROOT="${HOME}/helix"
 UTILS_PATH="${HELIX_ROOT}/utils/bootstrap"
 
 # Validate existence
@@ -24,14 +24,14 @@ echo "$UTILS_PATH"
 
 # Known fallback search roots
 FALLBACK_DIRS=(
-    "$HOME/helix_v3"
-    "$HOME/helix_v3/bootstrap"
-    "$HOME/helix_v3/bootstrap/utils"
-    "$HOME/helix_v3/bootstrap/deployment-phases"
-    "$HOME/helix_v3/bootstrap/deployment-phases/post-scripts"
-    "$HOME/helix_v3/bootstrap/support"
-    "$HOME/helix_v3/bootstrap/addon-configs"
-    "$HOME/helix_v3/bootstrap/tests"
+    "$HOME/helix"
+    "$HOME/helix/bootstrap"
+    "$HOME/helix/bootstrap/utils"
+    "$HOME/helix/bootstrap/deployment-phases"
+    "$HOME/helix/bootstrap/deployment-phases/post-scripts"
+    "$HOME/helix/bootstrap/support"
+    "$HOME/helix/bootstrap/addon-configs"
+    "$HOME/helix/bootstrap/tests"
 )
 
 # ─────── Options ───────

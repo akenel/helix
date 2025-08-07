@@ -6,7 +6,7 @@ ensure_mkcert_tls_secret() {
   local name="$1"
   local host="$2"
   local ns="$3"
-  local dir="$HOME/helix_v3/bootstrap/certs/${name}"
+  local dir="$HOME/helix/bootstrap/certs/${name}"
   mkdir -p "$dir"
   [[ ! -f "$dir/${host}.pem" || ! -f "$dir/${host}-key.pem" ]] && (
     echo "🔐 Creating cert for $host..."

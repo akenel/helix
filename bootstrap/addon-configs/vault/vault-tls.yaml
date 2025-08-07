@@ -1,0 +1,25 @@
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: mkcert-cluster-issuer
+spec:
+  ca:
+    secretName: mkcert-root-ca
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: vault-tls
+  namespace: vault
+spec:
+  secretName: vault-tls
+  duration: 8760h  # 1 year
+  renewBefore: 360h
+  commonName: vault.helix
+  dnsNames:
+    - vault.helix
+  issuerRef:
+    name: mkcert-cluster-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io

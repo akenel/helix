@@ -356,7 +356,7 @@ current-context: helix
 
 ## 🧪 3. Manual Setup Steps — TLS & Base64
 
-Run the following **from your cert directory** (e.g., `~/helix_v3/bootstrap/certs`):
+Run the following **from your cert directory** (e.g., `~/helix/bootstrap/certs`):
 
 ### ✅ A. Generate fresh certs using `mkcert`:
 
@@ -660,7 +660,7 @@ client-certificate-data ............ base64 -w 0 helix.crt > client-cert.txt
 client-key-data .................... base64 -w 0 helix.key > client-key.txt
 
 
-base64 -w 0 helix_v3/bootstrap/certs/helix.crt > encoded-cert.txt
+base64 -w 0 /bootstrap/certs/helix.crt > encoded-cert.txt
 `
 
 Copy the contents of encoded-cert.txt to use next.
@@ -798,7 +798,7 @@ mkcert -cert-file helix.crt -key-file helix.key localhost 127.0.0.1
 - This generates:
   - helix.crt – public cert
   - helix.key – private key
-- Place these in: helix_v3/bootstrap/certs/
+- Place these in: helix/bootstrap/certs/
 
 ---
 
@@ -886,7 +886,7 @@ Step 7️⃣ – Optional: Auto-Load on Terminal Open
 Edit your ~/.bashrc or ~/.zshrc:
 
 `bash
-source ~/helix_v3/helix-env.sh
+source ~/helix/helix-env.sh
 `
 
 > You’ll never have to remember again. It’ll just work.

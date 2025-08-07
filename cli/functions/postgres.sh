@@ -37,10 +37,10 @@ echo -e "${YELLOW}Using Kubeconfig: ${NC}${BRIGHT_GREEN}$KUBECONFIG${NC}"
 # Verify kubeconfig existence (optional but good practice)
 if [[ ! -f "$KUBECONFIG_PATH" ]]; then
     echo "⚠️ Kubeconfig not found. Attempting to generate it..."
-    source "$HOME/helix_v3/bootstrap/utils/generate_kubeconfig.sh"
+    source "$HOME/helix/bootstrap/utils/generate_kubeconfig.sh"
     generate_kubeconfig_from_k3d "helix" "$KUBECONFIG_PATH" || { echo "❌ Kubeconfig generation failed."; exit 1; }
 fi
-source "$HOME/helix_v3/utils/bootstrap/set-kubeconfig.sh" || { echo "❌ Failed to source set-kubeconfig.sh"; exit 1; }
+source "$HOME/helix/utils/bootstrap/set-kubeconfig.sh" || { echo "❌ Failed to source set-kubeconfig.sh"; exit 1; }
 # Verify kubectl connectivity *after* KUBECONFIG is set and potentially patched
 CONTEXT_NAME=$(kubectl config current-context 2>/dev/null || echo "")
 if [[ -z "$CONTEXT_NAME" ]]; then
@@ -92,11 +92,6 @@ if [[ "$CURRENT_SERVER" != "https://127.0.0.1:6550" ]]; then
     --server="https://127.0.0.1:6550" \
     --kubeconfig="$KUBECONFIG"
 fi
-# Use actual verified Keycloak config directory
-# SCRIPT_DIR will be /home/angel/helix_v3/bootstrap/deployment-phases
-# We need to go up one level (to /home/angel/helix_v3/bootstrap)
-# then navigate into addon-configs
-
 # Correct way to define the base Keycloak config directory
 HELIX_KEYCLOAK_CONFIGS_DIR="${SCRIPT_DIR}/../addon-configs/keycloak"
 

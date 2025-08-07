@@ -1,0 +1,23 @@
+[
+  {
+    "name": "jira-group",
+    "realmRoles": ["jira-user"],
+    "attributes": {
+      "externalGroup": ["jira-users"]
+    }
+  },
+  {
+    "name": "servicenow-group",
+    "realmRoles": ["servicenow-user"],
+    "attributes": {
+      "externalGroup": ["servicenow-users"]
+    }
+  },
+  {
+    "name": "devops-group",
+    "realmRoles": ["jenkins-user", "github-user"],
+    "attributes": {
+      "externalGroup": ["devops-team"]
+    }
+  }
+]

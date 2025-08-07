@@ -1,0 +1,28 @@
+[
+  {
+    "name": "roles",
+    "description": "Add user roles to the access token",
+    "protocol": "openid-connect",
+    "attributes": {
+      "include.in.token.scope": "false",
+      "display.on.consent.screen": "true",
+      "consent.screen.text": "${rolesScopeConsentText}"
+    },
+    "protocolMappers": [
+      {
+        "name": "realm roles",
+        "protocol": "openid-connect",
+        "protocolMapper": "oidc-usermodel-realm-role-mapper",
+        "consentRequired": false,
+        "config": {
+          "multivalued": "true",
+          "userinfo.token.claim": "true",
+          "id.token.claim": "true",
+          "access.token.claim": "true",
+          "claim.name": "realm_access.roles",
+          "jsonType.label": "String"
+        }
+      }
+    ]
+  }
+]

@@ -1,79 +1,101 @@
-auth:
-  adminUser: "admin"
-  adminPassword: "admin"
+replicaCount: 1
 
-externalDatabase:
-  host: "postgresql-helix.identity.svc.cluster.local"
-  user: "keycloak"
-  password: "pg_pass"
-  database: "postgresql-helix-db"
-  port: 5432
+image:
+  repository: quay.io/keycloak/keycloak
+  tag: "24.0.3"
+  pullPolicy: IfNotPresent
+
+command:
+  - "/opt/keycloak/bin/kc.sh"
+args:
+  - "start-dev"
+  - "--import-realm"
 
 postgresql:
   enabled: false
 
+extraEnv: |
+  - name: DB_VENDOR
+    value: postgres
+  - name: DB_ADDR
+    value: postgres.identity.svc.cluster.local
+  - name: DB_PORT
+    value: "5432"
+  - name: DB_DATABASE
+    value: keycloakdb
+  - name: DB_USER_FILE
+    value: /secrets/db-creds/user
+  - name: DB_PASSWORD_FILE
+    value: /secrets/db-creds/password
+  - name: KEYCLOAK_ADMIN
+    value: admin
+  - name: KEYCLOAK_ADMIN_PASSWORD
+    value: admin
+  - name: KC_PROXY
+    value: edge
+  - name: KC_HOSTNAME
+    value: keycloak.helix  
+  - name: KC_HOSTNAME_STRICT
+    value: "false"
+
+extraVolumeMounts: |
+  - name: db-creds
+    mountPath: /secrets/db-creds
+    readOnly: true
+
+extraVolumes: |
+  - name: db-creds
+    secret:
+      secretName: keycloak-db-creds
+
 ingress:
   enabled: true
   ingressClassName: "traefik"
-  hostname: "keycloak.helix"
-  tls: true
   annotations:
     cert-manager.io/cluster-issuer: "mkcert-ca-issuer"
-  pathType: Prefix
-  paths:
-    - /
-    - /health
-# Use edge proxy for correct X-Forwarded headers (Traefik)
-proxy: edge
+    traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
+    traefik.ingress.kubernetes.io/router.tls: "true"
+  rules:
+    - host: keycloak.helix
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - hosts:
+        - keycloak.helix
+      secretName: keycloak-helix-tls
 
-# Environment variables for import and theme
-extraEnvVars:
-  - name: KEYCLOAK_IMPORT
-    value: "/opt/keycloak/addon-configs/helix-realm.json"
-  - name: KEYCLOAK_THEME
-    value: "helix"
-
-# Mount custom theme and realm import configmaps
-extraVolumes:
-  - name: helix-theme
-    configMap:
-      name: helix-theme
-  - name: helix-realm-import
-    configMap:
-      name: helix-realm-import
-
-extraVolumeMounts:
-  - name: helix-theme
-    mountPath: /opt/keycloak/themes/helix
-    readOnly: true
-  - name: helix-realm-import
-    mountPath: /opt/keycloak/addon-configs/helix-realm.json
-    subPath: helix-realm.json
-    readOnly: true
-# Resource requests and limits
 resources:
   requests:
     memory: "1Gi"
-    cpu: "200m"
+    cpu: "500m"
   limits:
     memory: "2Gi"
-    cpu: "500m"
+    cpu: "1"
 
-readinessProbe:
+startupProbe: |
   httpGet:
     path: /
     port: 8080
-  initialDelaySeconds: 33
+  initialDelaySeconds: 600
+  timeoutSeconds: 5
   periodSeconds: 10
-  timeoutSeconds: 3
-  successThreshold: 1
-  failureThreshold: 10
-livenessProbe:
+  failureThreshold: 12
+
+readinessProbe: |
   httpGet:
     path: /
     port: 8080
-  initialDelaySeconds: 33
+  initialDelaySeconds: 600
+  timeoutSeconds: 5
   periodSeconds: 10
-  timeoutSeconds: 3
-  successThreshold: 1
-  failureThreshold: 10
+  failureThreshold: 5
+
+livenessProbe: |
+  httpGet:
+    path: /
+    port: 8080
+  initialDelaySeconds: 600
+  timeoutSeconds: 5
+  periodSeconds: 10
+  failureThreshold: 5

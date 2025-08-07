@@ -37,7 +37,7 @@ _set_kubeconfig_env() {
   # Set the environment variables globally for the current shell
   export HELIX_KUBECONFIG_PATH="$KUBECONFIG_PATH"
   export KUBECONFIG="$KUBECONFIG_PATH"
-echo "Completed \helix_v3\bootstrap\utils\set-kubeconfig.sh" 
+echo "Completed \helix\bootstrap\utils\set-kubeconfig.sh" 
   # No direct echo for "🔍 Look KUBECONFIG" here. Let the calling script handle feedback.
   return 0 # Indicate success
 }

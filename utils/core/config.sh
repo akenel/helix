@@ -4,7 +4,7 @@ set -euo pipefail
 
 # Expects SCRIPT_DIR to be exported from the calling script
 # Example:
-# export SCRIPT_DIR="/home/angel/helix_v3/bootstrap"
+# export SCRIPT_DIR="/home/angel/helix/bootstrap"
 
 # Constants
 LOGO="🔐"

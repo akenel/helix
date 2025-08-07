@@ -263,9 +263,6 @@ Just to confirm you're pushing to the correct remote:
 ```bash
 git remote -v
 ```
-
-If it's correct (e.g., `origin https://github.com/youruser/helix_v3.git`), you’re golden.
-
 ---
 
 ### 🎯 Final Push (If Ready)

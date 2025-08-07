@@ -1,0 +1,113 @@
+# A comprehensive values file for a local, etc/hosts-based Mailu installation.
+# IMPORTANT: Replace all placeholder values below with your own!
+
+# --- Mailu Parameters ---
+hostnames:
+  - mailu.helix
+domain: "mailu.helix"
+secretKey: "admin"
+
+# Enable and configure your initial admin account
+initialAccount:
+  enabled: true
+  username: "admin"
+  domain: "mailu.helix"
+  password: "admin"
+
+# --- Storage Parameters ---
+persistence:
+  single_pvc: true
+  size: 100Gi
+  storageClass: "standard"
+  # Verify this is the correct storage class for your local cluster
+
+# --- Ingress Configuration ---
+ingress:
+  enabled: true
+  ingressClassName: "traefik"
+  tls: true
+  existingSecret: "mailu-tls-secret"
+  # Name of the secret you created in step 1
+  annotations: {}
+  # No cert-manager annotations needed with a pre-existing secret
+  realIpHeader: "X-Forwarded-For"
+
+# --- Database Configuration ---
+# Leave these as false to use the internal, chart-managed database
+postgresql:
+  enabled: false
+mariadb:
+  enabled: false
+
+# --- Front and Proxy Configuration ---
+# Use hostPort for local access to mail ports
+front:
+  hostPort:
+    enabled: true
+  externalService:
+    # This entire block is required by the Helm chart, even if disabled.
+    enabled: false
+
+proxy:
+  hostPort:
+    enabled: true
+
+
+
+# --- Individual component resource limits for a low-resource environment ---
+admin:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+clamav:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 200m
+      memory: 768Mi
+dovecot:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+postfix:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+redis:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+rspamd:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 200m
+      memory: 512Mi
+webmail:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 200m
+      memory: 512Mi

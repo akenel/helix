@@ -1,0 +1,15 @@
+[
+  { "name": "admin", "description": "Administrator role" },
+  { "name": "developer", "description": "Developer role" },
+  { "name": "support", "description": "Support role" },
+  { "name": "jira-admin", "description": "Jira administrator role" },
+  { "name": "jira-user", "description": "Jira user role" },
+  { "name": "servicenow-admin", "description": "ServiceNow administrator role" },
+  { "name": "servicenow-user", "description": "ServiceNow user role" },
+  { "name": "teams-admin", "description": "Teams administrator role" },
+  { "name": "teams-user", "description": "Teams user role" },
+  { "name": "github-user", "description": "GitHub user role" },
+  { "name": "jenkins-user", "description": "Jenkins user role" },
+  { "name": "viewer", "description": "Viewer role" },
+  { "name": "user", "description": "Basic user role" }
+]

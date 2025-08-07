@@ -4,7 +4,7 @@ trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 🔐 04b - Keycloak User Bootstrap
 # 📜 Adds default users + role mappings to 'helix' realm
-# 🧠 helix_v3/utils/bootstrap/04b-keycloak-users.sh
+# 🧠 helix/utils/bootstrap/04b-keycloak-users.sh
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 set -euo pipefail

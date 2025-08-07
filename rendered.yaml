@@ -1,0 +1,286 @@
+---
+# Source: keycloak/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: keycloak
+  labels:
+    helm.sh/chart: keycloak-18.10.0
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/instance: keycloak
+    app.kubernetes.io/version: "24.0.3"
+    app.kubernetes.io/managed-by: Helm
+imagePullSecrets:
+    []
+---
+# Source: keycloak/templates/configmap-startup.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-startup
+  labels:
+    helm.sh/chart: keycloak-18.10.0
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/instance: keycloak
+    app.kubernetes.io/version: "24.0.3"
+    app.kubernetes.io/managed-by: Helm
+data:
+  keycloak.cli: |
+    embed-server --server-config=standalone-ha.xml --std-out=echo
+    batch
+    
+    echo Configuring node identifier
+    
+    ## Sets the node identifier to the node name (= pod name). Node identifiers have to be unique. They can have a
+    ## maximum length of 23 characters. Thus, the chart's fullname template truncates its length accordingly.
+    /subsystem=transactions:write-attribute(name=node-identifier, value=${jboss.node.name})
+    
+    echo Finished configuring node identifier
+    
+    run-batch
+    stop-embedded-server
+---
+# Source: keycloak/templates/service-headless.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak-headless
+  labels:
+    helm.sh/chart: keycloak-18.10.0
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/instance: keycloak
+    app.kubernetes.io/version: "24.0.3"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: headless
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/instance: keycloak
+---
+# Source: keycloak/templates/service-http.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak-http
+  labels:
+    helm.sh/chart: keycloak-18.10.0
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/instance: keycloak
+    app.kubernetes.io/version: "24.0.3"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: http
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+    - name: https
+      port: 8443
+      targetPort: https
+      protocol: TCP
+    - name: http-management
+      port: 9990
+      targetPort: http-management
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/instance: keycloak
+---
+# Source: keycloak/templates/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: keycloak
+  labels:
+    helm.sh/chart: keycloak-18.10.0
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/instance: keycloak
+    app.kubernetes.io/version: "24.0.3"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: keycloak
+      app.kubernetes.io/instance: keycloak
+  replicas: 1
+  serviceName: keycloak-headless
+  podManagementPolicy: Parallel
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        checksum/config-startup: cef8cb829391700a007a1bd5b97288d3f84120ba29e613b428b2f3d190f0cb0b
+        checksum/secrets: 44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a
+      labels:
+        app.kubernetes.io/name: keycloak
+        app.kubernetes.io/instance: keycloak
+    spec:
+      containers:
+        - name: keycloak
+          securityContext:
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
+          image: "quay.io/keycloak/keycloak:24.0.3"
+          imagePullPolicy: IfNotPresent
+          command:
+            - /opt/keycloak/bin/kc.sh
+          args:
+            - start-dev
+            - --import-realm
+          env:
+            - name: DB_VENDOR
+              value: postgres
+            - name: DB_ADDR
+              value: postgres.helix.svc.cluster.local
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_DATABASE
+              value: keycloakdb
+            - name: DB_USER_FILE
+              value: /secrets/db-creds/user
+            - name: DB_PASSWORD_FILE
+              value: /secrets/db-creds/password
+            - name: KEYCLOAK_ADMIN
+              value: admin
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              value: admin
+            
+          envFrom:
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: https
+              containerPort: 8443
+              protocol: TCP
+            - name: http-management
+              containerPort: 9990
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+            
+          readinessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: 30
+            timeoutSeconds: 1
+            
+          startupProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: 30
+            timeoutSeconds: 2
+            failureThreshold: 60
+            periodSeconds: 5
+            
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+            requests:
+              cpu: 500m
+              memory: 1Gi
+          volumeMounts:
+            - name: startup
+              mountPath: "/opt/jboss/startup-scripts/keycloak.cli"
+              subPath: "keycloak.cli"
+              readOnly: true
+            - name: db-creds
+              mountPath: /secrets/db-creds
+              readOnly: true
+            
+      serviceAccountName: keycloak
+      securityContext:
+        fsGroup: 1000
+      enableServiceLinks: true
+      restartPolicy: Always
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: keycloak
+                  app.kubernetes.io/instance: keycloak
+                matchExpressions:
+                  - key: app.kubernetes.io/component
+                    operator: NotIn
+                    values:
+                      - test
+              topologyKey: kubernetes.io/hostname
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: keycloak
+                    app.kubernetes.io/instance: keycloak
+                  matchExpressions:
+                    - key: app.kubernetes.io/component
+                      operator: NotIn
+                      values:
+                        - test
+                topologyKey: failure-domain.beta.kubernetes.io/zone
+        
+      terminationGracePeriodSeconds: 60
+      volumes:
+        - name: startup
+          configMap:
+            name: keycloak-startup
+            defaultMode: 0555
+            items:
+              - key: keycloak.cli
+                path: keycloak.cli
+        - name: db-creds
+          secret:
+            secretName: keycloak-db-creds
+---
+# Source: keycloak/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: keycloak
+  annotations:
+    cert-manager.io/cluster-issuer: "mkcert-ca-issuer"
+    traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
+    traefik.ingress.kubernetes.io/router.tls: "true"
+  labels:
+    helm.sh/chart: keycloak-18.10.0
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/instance: keycloak
+    app.kubernetes.io/version: "24.0.3"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - "keycloak.helix"
+      secretName: keycloak-helix-tls
+  rules:
+    -
+      host: "keycloak.helix"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak-http
+                port:
+                  name: http

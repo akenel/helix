@@ -1,0 +1,14 @@
+{
+  "clientId": "jira",
+  "name": "Jira Client",
+  "secret": "jira-client-secret",
+  "enabled": true,
+  "protocol": "openid-connect",
+  "redirectUris": ["https://jira.company.com/*"],
+  "webOrigins": ["https://jira.company.com"],
+  "clientAuthenticatorType": "client-secret",
+  "publicClient": false,
+  "standardFlowEnabled": true,
+  "directAccessGrantsEnabled": true,
+  "defaultClientScopes": ["profile", "email", "roles", "web-origins"]
+}

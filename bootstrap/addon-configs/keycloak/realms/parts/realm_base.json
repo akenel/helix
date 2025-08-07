@@ -1,0 +1,17 @@
+{
+  "realm": "helix",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "verifyEmail": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "loginTheme": "keycloak",
+  "emailTheme": "keycloak",
+  "attributes": {
+    "frontendUrl": "https://keycloak.helix"
+  }
+}

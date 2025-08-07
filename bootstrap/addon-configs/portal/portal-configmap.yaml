@@ -1,4 +1,4 @@
-# ~/helix_v3/bootstrap/configs/portal/portal-configmap.yaml
+# ~/helix/bootstrap/configs/portal/portal-configmap.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:

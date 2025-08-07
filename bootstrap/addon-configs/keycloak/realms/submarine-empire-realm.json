@@ -357,16 +357,49 @@
       ]
     }
   ],
-  "defaultDefaultClientScopes": [
-    "role_list",
-    "profile",
-    "email"
-  ],
-  "defaultOptionalClientScopes": [
-    "offline_access",
-    "address", 
-    "phone",
-    "submarine-roles"
+  "authenticationFlows": [
+    {
+      "alias": "browser",
+      "description": "Browser authentication flow",
+      "providerId": "basic-flow",
+      "topLevel": true,
+      "builtIn": true
+    },
+    {
+      "alias": "registration",
+      "description": "Registration flow for new users",
+      "providerId": "registration",
+      "topLevel": true,
+      "builtIn": true
+    },
+    {
+      "alias": "direct grant",
+      "description": "Direct grant authentication flow",
+      "providerId": "direct-grant",
+      "topLevel": true,
+      "builtIn": true
+    },
+    {
+      "alias": "reset credentials",
+      "description": "Flow for resetting user credentials",
+      "providerId": "reset-credentials",
+      "topLevel": true,
+      "builtIn": true
+    },
+    {
+      "alias": "clients",
+      "description": "Client authentication flow",
+      "providerId": "client-authentication",
+      "topLevel": true,
+      "builtIn": true
+    },
+    {
+      "alias": "docker auth",
+      "description": "Docker authentication flow for container access",
+      "providerId": "docker-authentication",
+      "topLevel": true,
+      "builtIn": true
+    }
   ],
   "browserFlow": "browser",
   "registrationFlow": "registration",

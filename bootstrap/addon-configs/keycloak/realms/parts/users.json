@@ -1,0 +1,44 @@
+[
+  {
+    "username": "admin",
+    "enabled": true,
+    "email": "admin@keycloak.helix",
+    "emailVerified": true,
+    "credentials": [
+      {
+        "type": "password",
+        "value": "admin",
+        "temporary": false
+      }
+    ],
+    "realmRoles": ["admin", "jira-admin", "servicenow-admin", "teams-admin"]
+  },
+  {
+    "username": "devops",
+    "enabled": true,
+    "email": "devops@keycloak.helix",
+    "emailVerified": true,
+    "credentials": [
+      {
+        "type": "password",
+        "value": "devops",
+        "temporary": false
+      }
+    ],
+    "realmRoles": ["developer", "jenkins-user", "github-user"]
+  },
+  {
+    "username": "support",
+    "enabled": true,
+    "email": "support@keycloak.helix",
+    "emailVerified": true,
+    "credentials": [
+      {
+        "type": "password",
+        "value": "support",
+        "temporary": false
+      }
+    ],
+    "realmRoles": ["support", "servicenow-user", "teams-user"]
+  }
+]

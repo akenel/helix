@@ -1,22 +1,22 @@
 plugins:
-  - name: n8n
-    emoji: ♻️
-    description: "Low-code workflow automation"
+  - name: prometheus
+    emoji: 📊
+    description: "Monitoring and alerting toolkit"
     enabled: true
-    namespace: n8n
-    values_file: bootstrap/addon-configs/n8n/n8n-values.yaml
-    artifacthub_url: https://artifacthub.io/packages/helm/open-8gears/n8n
-    # You can now choose:
-    # Option 1: Explicit fields (preferred)
-    helm_chart_repo: "8gears.container-registry.com/library" # For OCI, this might be part of the chart name or just the registry
-    helm_chart_name: "n8n" # If helm_chart_repo is empty, this should be the full OCI path like oci://8gears.container-registry.com/library/n8n
-    helm_chart_version: "1.0.10"
-    helm_release_name_override: "my-n8n" # Will still be stripped by normalize_helm_command to 'n8n' by default
-    # Option 2: Fallback helm_install_cmd (if explicit fields above are missing or incomplete)
-    helm_install_cmd: helm install my-n8n oci://8gears.container-registry.com/library/n8n --version 1.0.10
-    # Add a default storage class if needed
+    namespace: monitoring
+    values_file: bootstrap/addon-configs/prometheus/prometheus-values.yaml
+    artifacthub_url: https://artifacthub.io/packages/helm/prometheus-community/prometheus
+    helm_chart_repo: "prometheus-community"
+    helm_chart_name: "prometheus"
+    helm_chart_version: "16.0.0"
     default_storage_class: "local-path" # Example
-
+    notes: |
+      1. Prometheus UI will be available at:
+         http://<cluster-ip>:9090
+      2. Grafana UI (if installed) at:
+         http://<cluster-ip>:3000
+    # Option 2: Fallback helm_install_cmd (if explicit fields above are missing or incomplete)
+    helm_install_cmd: "helm install prometheus prometheus-community/prometheus --version 16.0.0"
   - name: portainer
     emoji: 🐳
     description: "Kubernetes-native UI and container management"
@@ -38,6 +38,25 @@ plugins:
       2. Default credentials:
          Username: admin
          Password: [set at first login]
+
+  - name: n8n
+    emoji: ♻️
+    description: "Low-code workflow automation"
+    enabled: true
+    namespace: n8n
+    values_file: bootstrap/addon-configs/n8n/n8n-values.yaml
+    artifacthub_url: https://artifacthub.io/packages/helm/open-8gears/n8n
+    # You can now choose:
+    # Option 1: Explicit fields (preferred)
+    helm_chart_repo: "8gears.container-registry.com/library" # For OCI, this might be part of the chart name or just the registry
+    helm_chart_name: "n8n" # If helm_chart_repo is empty, this should be the full OCI path like oci://8gears.container-registry.com/library/n8n
+    helm_chart_version: "1.0.10"
+    helm_release_name_override: "my-n8n" # Will still be stripped by normalize_helm_command to 'n8n' by default
+    # Option 2: Fallback helm_install_cmd (if explicit fields above are missing or incomplete)
+    helm_install_cmd: helm install my-n8n oci://8gears.container-registry.com/library/n8n --version 1.0.10
+    # Add a default storage class if needed
+    default_storage_class: "local-path" # Example
+
 
   - name: kong
     emoji: 🦍

@@ -1,63 +1,69 @@
-# ~/helix_v3/utils/bootstrap/spinner_utils.sh
+#!/usr/bin/env bash
+# ------------------------------------------------------------------------------
+# 🌀 Spinner + Logging Utility (Sherlock TLC Edition) — Revised for Resilience
+# ------------------------------------------------------------------------------
 
-# Global variable to control debug logging
-# This should be set by the main script (e.g., 00_run_all_steps.sh)
-# before sourcing this file. Default to false if not set.
-HELIX_DEBUG="${HELIX_DEBUG:-false}"
-# echo "Spinner /\(.\)/"
-# Spinner variables
-_spinner_pid=""
-_spinner_delay="0.2"
-_spinner_chars="⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+# 🕰 Timestamp helper
+timestamp() {
+  date +"%Y-%m-%d %H:%M:%S %Z"
+}
 
-# Start a background spinner
+# 📢 Log Levels
+log_info()    { echo -e "[INFO]    $(timestamp) $*"; }
+log_warn()    { echo -e "\033[1;33m[WARN]    $(timestamp) $*\033[0m"; }
+log_error()   { echo -e "\033[1;31m[ERROR]   $(timestamp) $*\033[0m" >&2; }
+log_success() { echo -e "\033[1;32m[SUCCESS] $(timestamp) $*\033[0m"; }
+
+# 🌀 Spinner globals
+SPINNER_PID=""
+SPINNER_CHARS=(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
+SPINNER_DELAY=0.1
+
+# 🌀 Start spinner with a message
 start_spinner() {
-  local message="$1"
-  echo -n "$message "
+  local msg="${*:-}"
+  local i=0
+
+  if [[ -z "$msg" ]]; then
+    log_warn "start_spinner called without a message. Spinner will still run."
+    msg="Working..."
+  fi
+
+  printf "\r⏳ %s" "$msg"
   (
     while true; do
-      for char in $(echo "$_spinner_chars" | sed -e 's/\(.\)/\1 /g'); do
-        echo -en "\b$char"
-        sleep "$_spinner_delay"
-      done
+      printf "\r%s %s" "${SPINNER_CHARS[i]}" "$msg"
+      i=$(( (i + 1) % ${#SPINNER_CHARS[@]} ))
+      sleep "$SPINNER_DELAY"
     done
   ) &
-  _spinner_pid=$!
+  SPINNER_PID=$!
+  disown "$SPINNER_PID"
 }
 
-# Stop the spinner and print status
+# ✅ Stop spinner and print status
 stop_spinner() {
-  # Correct way to declare local variable with a default value for $1
-  local exit_code="${1:-1}" # Default to 1 (failure) if no exit code is provided
-  local operation_message="${2:-Service Operation}" # Optional: if you want a message for the spinner stop
+  local status="${1:-1}"  # Default to failure if unset
 
-  if [[ -n "$_spinner_pid" ]]; then
-    kill "$_spinner_pid" > /dev/null 2>&1
-    wait "$_spinner_pid" 2>/dev/null
-    echo -en "\b" # Erase the last spinner char
+  if [[ -n "$SPINNER_PID" ]]; then
+    kill "$SPINNER_PID" >/dev/null 2>&1 || true
+    wait "$SPINNER_PID" 2>/dev/null || true
+    unset SPINNER_PID
   fi
-  if [[ "$exit_code" -eq 0 ]]; then
-    echo -e "✅" # Success checkmark
+
+  if [[ "$status" == "0" ]]; then
+    printf "\r\033[1;32m✅ Done!\033[0m\n"
   else
-    echo -e "❌" # Failure cross
+    printf "\r\033[1;31m❌ Failed.\033[0m\n"
   fi
 }
 
-# Logging functions
-log_info() {
-  if [[ "$HELIX_DEBUG" = "true" ]]; then
-    echo "[INFO] $(date +'%Y-%m-%d %H:%M:%S %Z') $1"
+# 🧹 Clean spinner without printing success/fail
+stop_spinner_quietly() {
+  if [[ -n "$SPINNER_PID" ]]; then
+    kill "$SPINNER_PID" >/dev/null 2>&1 || true
+    wait "$SPINNER_PID" 2>/dev/null || true
+    unset SPINNER_PID
+    printf "\r"
   fi
-}
-
-log_success() {
-  echo "[SUCCESS] $(date +'%Y-%m-%d %H:%M:%S %Z') $1"
-}
-
-log_warn() {
-  echo "[WARN] $(date +'%Y-%m-%d %H:%M:%S %Z') $1" >&2
-}
-
-log_error() {
-  echo "[ERROR] $(date +'%Y-%m-%d %H:%M:%S %Z') $1" >&2
 }

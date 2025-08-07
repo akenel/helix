@@ -4,6 +4,8 @@ trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # Run via: ./04_deploy_identity_stack.sh
 # Format: Unix (dos2unix 04_deploy_identity_stack.sh)
 set -euo pipefail
+# Load spinner + pod-wait utilities
+
 
 NC='\033[0m' # No Color
 RED='\033[0;31m'
@@ -17,19 +19,26 @@ echo -e "${CYAN}🚀 Deploying Identity Stack (Postgres + Keycloak)...${NC}"
 
 # Detect current script location
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-
+echo -e "${CYAN}Script Directory: ${NC}${BRIGHT_GREEN}$SCRIPT_DIR${NC}"
+echo -e "${CYAN}Helix Identity Stack Deployment Scripts location: ${NC}${BRIGHT_GREEN}$SCRIPT_DIR${NC}"
+# Ensure KUBECONFIG is set correctly
+# Use the default HELIX_ROOT_DIR if not set
+echo "Using Helix Script Directory: $SCRIPT_DIR"
+source "$PWD/utils/core/spinner_utils.sh" || {
+  echo -e "${RED}❌ Failed to source spinner_utils.sh — aborting.${NC}"
+  exit 1
+}
 # Always use the standard kubeconfig path, or what's already set
-KUBECONFIG_PATH="${KUBECONFIG:-/home/angel/.helix/kubeconfig.yaml}"
+KUBECONFIG_PATH="${KUBECONFIG:-$HOME/.helix/kubeconfig.yaml}"
 export KUBECONFIG="$KUBECONFIG_PATH"
 echo -e "${YELLOW}Using Kubeconfig: ${NC}${BRIGHT_GREEN}$KUBECONFIG${NC}"
 # Verify kubeconfig existence (optional but good practice)
 if [[ ! -f "$KUBECONFIG_PATH" ]]; then
     echo "⚠️ Kubeconfig not found. Attempting to generate it..."
-    source "$HOME/helix_v3/bootstrap/utils/generate_kubeconfig.sh"
+    source "$PWD/utils/generate_kubeconfig.sh"
     generate_kubeconfig_from_k3d "helix" "$KUBECONFIG_PATH" || { echo "❌ Kubeconfig generation failed."; exit 1; }
 fi
-source "$HOME/helix_v3/utils/bootstrap/set-kubeconfig.sh" || { echo "❌ Failed to source set-kubeconfig.sh"; exit 1; }
+source "$PWD/utils/bootstrap/set-kubeconfig.sh" || { echo "❌ Failed to source set-kubeconfig.sh"; exit 1; }
 # Verify kubectl connectivity *after* KUBECONFIG is set and potentially patched
 CONTEXT_NAME=$(kubectl config current-context 2>/dev/null || echo "")
 if [[ -z "$CONTEXT_NAME" ]]; then
@@ -82,16 +91,16 @@ if [[ "$CURRENT_SERVER" != "https://127.0.0.1:6550" ]]; then
     --kubeconfig="$KUBECONFIG"
 fi
 # Use actual verified Keycloak config directory
-# SCRIPT_DIR will be /home/angel/helix_v3/bootstrap/deployment-phases
-# We need to go up one level (to /home/angel/helix_v3/bootstrap)
+# SCRIPT_DIR will be /home/angel/helix/bootstrap/deployment-phases
+# We need to go up one level (to /home/angel/helix/bootstrap)
 # then navigate into addon-configs
 
 # Correct way to define the base Keycloak config directory
 HELIX_KEYCLOAK_CONFIGS_DIR="${SCRIPT_DIR}/../addon-configs/keycloak"
-
+HELIX_JSON_REALM="helix-realm.json"
 # The rest of your definitions will then be correct relative to this base
 THEME_DIR="${HELIX_KEYCLOAK_CONFIGS_DIR}/themes/${CLUSTER}"
-REALM_JSON="${HELIX_KEYCLOAK_CONFIGS_DIR}/realms/helix-realm.json"
+REALM_JSON="${HELIX_KEYCLOAK_CONFIGS_DIR}/realms/$HELIX_JSON_REALM"
 
 echo "Resolved SCRIPT_DIR: ${SCRIPT_DIR}"
 echo "Resolved HELIX_KEYCLOAK_CONFIGS_DIR: ${HELIX_KEYCLOAK_CONFIGS_DIR}"
@@ -180,25 +189,45 @@ echo "   VAULT_ADDR=${VAULT_ADDR}"
 echo "   VAULT_TOKEN=${VAULT_TOKEN:-}"
 echo "   VAULT_TOKEN_FILE=${VAULT_TOKEN_FILE:-}" 
 
-VAULT_POD_NAME=$(kubectl get pods -n "$VAULT_NAMESPACE" -l \
-  app.kubernetes.io/instance="$VAULT_RELEASE" -o jsonpath='{.items[0].metadata.name}') || \
-  { echo "❌ Could not find Vault pod"; exit 1; }
+
 ####### Utility Functions ##############
 enable_kv_if_missing() {
-  echo "🔐 Checking 'secret/' KV engine in Vault..."
+  VAULT_POD_NAME=$(kubectl get pods -n "$VAULT_NAMESPACE" -l \
+    app.kubernetes.io/instance="$VAULT_RELEASE" -o jsonpath='{.items[0].metadata.name}') || {
+    echo "❌ Could not find Vault pod"
+    exit 1
+  }
+
+  if [[ -z "$VAULT_POD_NAME" ]]; then
+    echo "❌ Vault pod not found in namespace '$VAULT_NAMESPACE'."
+    exit 1
+  fi
+
+  echo "🔐 Checking if Vault is sealed..."
   if ! kubectl exec -n "$VAULT_NAMESPACE" "$VAULT_POD_NAME" -- \
-      sh -c "VAULT_ADDR=$VAULT_ADDR VAULT_TOKEN=$VAULT_TOKEN_FILE \
-             vault secrets list -format=json" | jq -e '."secret/"' &>/dev/null; then
+    sh -c "VAULT_ADDR=$VAULT_ADDR VAULT_TOKEN=$VAULT_TOKEN vault status -format=json" |
+    jq -e '.sealed == false' >/dev/null; then
+    echo "❌ Vault is sealed. Cannot proceed with enabling KV."
+    echo "🕵️‍♂️ Hint: Run your unseal script or bootstrap Vault first."
+    exit 1
+  fi
+
+  echo "🔍 Checking if 'secret/' KV engine is already enabled..."
+  if ! kubectl exec -n "$VAULT_NAMESPACE" "$VAULT_POD_NAME" -- \
+      sh -c "VAULT_ADDR=$VAULT_ADDR VAULT_TOKEN=$VAULT_TOKEN vault secrets list -format=json" |
+      jq -e '."secret/"' &>/dev/null; then
     echo "🛠️ Enabling 'secret/' KV engine..."
     kubectl exec -n "$VAULT_NAMESPACE" "$VAULT_POD_NAME" -- \
-      sh -c "VAULT_ADDR=$VAULT_ADDR VAULT_TOKEN=$VAULT_TOKEN_FILE \
-             vault secrets enable -path=secret kv" || \
-      { echo "❌ Enabling KV engine failed"; exit 1; }
+      sh -c "VAULT_ADDR=$VAULT_ADDR VAULT_TOKEN=$VAULT_TOKEN vault secrets enable -path=secret kv" || {
+        echo "❌ Enabling KV engine failed"
+        exit 1
+      }
   else
     echo "✅ 'secret/' KV already enabled."
   fi
 }
-spinner() {
+
+start_braille_spinner() {
   local pid=$1
   local delay=0.1
   local spinstr='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
@@ -259,22 +288,47 @@ cleanup_helm_release() {
 
     kubectl delete pvc -n "$namespace" -l app.kubernetes.io/instance="$release" --ignore-not-found || true
 }
+wait_for_vault_ready() {
+  echo "⏳ Waiting for Vault to become ready..."
+
+  local retries=30
+  local delay=2
+  local success=false
+
+  for ((i=1; i<=retries; i++)); do
+    if kubectl exec -n "$VAULT_NAMESPACE" "$VAULT_POD_NAME" -- \
+        sh -c "VAULT_ADDR=$VAULT_ADDR VAULT_TOKEN=$VAULT_TOKEN vault status -format=json" |
+        jq -e '.sealed == false' >/dev/null; then
+      echo "✅ Vault is unsealed and responding."
+      success=true
+      break
+    else
+      echo "⌛ Attempt $i/$retries: Vault not ready yet. Retrying in ${delay}s..."
+      sleep "$delay"
+    fi
+  done
+
+  if ! $success; then
+    echo "❌ Vault is still sealed or unresponsive after $((retries * delay))s."
+    exit 1
+  fi
+}
 
 #################################################
 # Step 1 - start of program - Prompt for cluster 
 ##################################################
 echo "🔍 Available k3d clusters:"
 k3d cluster list | awk 'NR>1 {print "🔥 " $1}'
-# echo ""
-# if [ -t 0 ]; then
-#   read -t 10 -p "🌠 Enter cluster name [default: helix]: " CLUSTER_INPUT || true
-# fi  
-# CLUSTER="${CLUSTER_INPUT:-helix}"
+echo ""
+if [ -t 0 ]; then
+  read -t 10 -p "🌠 Enter cluster name [default: helix]: " CLUSTER_INPUT || true
+fi  
+CLUSTER="${CLUSTER_INPUT:-helix}"
 echo "📌 Using cluster: $CLUSTER" # Changed from CLUSTER_NAME to CLUSTER for consistency
 # Now, use $CLUSTER consistently for derived variables
 DOMAIN=$CLUSTER # Assuming DOMAIN is always "cluster" environment
 NAMESPACE="identity"
-POSTGRES_RELEASE="postgresql-${CLUSTER}"
+POSTGRES_RELEASE="postgres-${CLUSTER}"
 KEYCLOAK_RELEASE="keycloak-${CLUSTER}"
 PG_DATABASE="${POSTGRES_RELEASE}-db"
 DB_FQDN="${POSTGRES_RELEASE}.${NAMESPACE}.svc.cluster.local"
@@ -285,6 +339,7 @@ KC_PASS="admin"
 ####### Defined variables #############
 echo "✅ Prepared all variables. Beginning deployment..."
 # Prepare Vault KV store
+wait_for_vault_ready
 enable_kv_if_missing
 ####### PostgreSQL Deployment #########
 echo "🧹 Cleaning leftover PostgreSQL..."
@@ -348,8 +403,25 @@ echo ""
 start_postgres_spinner & SPINNER_PID=$!
 helm upgrade --install "$POSTGRES_RELEASE" bitnami/postgresql \
   --namespace "$NAMESPACE" \
-  -f "$vals" || \
-  { echo "❌ PostgreSQL helm install failed"; exit 1; }
+  -f "$vals" \
+  --wait \
+  --timeout 600s || {
+    echo "❌ Helm failed to install PostgreSQL (deployment error)."
+    exit 1
+}
+
+
+echo "⏳ Waiting for PostgreSQL pod(s) to become Ready..."
+
+# Wait up to 10 minutes (600s) for all pods in the namespace with label release=postgresql-helix
+kubectl wait --namespace "$NAMESPACE" \
+  --for=condition=Ready pod \
+  -l "app.kubernetes.io/instance=$POSTGRES_RELEASE" \
+  --timeout=600s || {
+    echo "❌ PostgreSQL pods failed to become ready in time."
+    echo "🕵️‍♂️ Run: kubectl get pods -n $NAMESPACE"
+    exit 1
+}
 ####### PostgreSQL Deployed #########
 # rm -f configs/postgres/postgresql_values.yaml
 echo ""
@@ -366,10 +438,9 @@ echo "  📡 Host: $DB_FQDN"
 kubectl rollout status statefulset "$POSTGRES_RELEASE" -n "$NAMESPACE" --timeout=300s
 
 # Store Postgres creds
+wait_for_vault_ready
 enable_kv_if_missing
-
 # --- Before calling store_secret ---
-
 echo -e "${CYAN}🔍 Checking Traefik Ingress Controller status...${NC}"
 # Wait for Traefik deployment to be ready (assuming default 'traefik' namespace)
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=traefik -n kube-system --timeout=180s || {
@@ -442,9 +513,9 @@ kubectl delete configmap "${CLUSTER}-realm-import" -n "$NAMESPACE" --ignore-not-
 echo -e "\n📦 Creating Keycloak ConfigMaps..."
 
 THEME_DIR="${HELIX_KEYCLOAK_CONFIGS_DIR}/themes"
-REALM_JSON="${HELIX_KEYCLOAK_CONFIGS_DIR}/realms/helix-realm.json"
+REALM_JSON="${HELIX_KEYCLOAK_CONFIGS_DIR}/realms/$HELIX_JSON_REALM"
 THEME_DIR="${THEME_DIR}/${CLUSTER}"
-REALM_JSON="${REALM_JSON:-${THEME_DIR}/helix-realm.json}"
+REALM_JSON="${REALM_JSON:-${THEME_DIR}/$HELIX_JSON_REALM}"
 echo "🔧 Using Theme Directory: $THEME_DIR  "
 echo "🔧 Using Realm JSON File: $REALM_JSON"
 echo "📌 Cluster: $CLUSTER"
@@ -490,7 +561,7 @@ kubectl create configmap "${CLUSTER}-theme" \
 
 # Create ConfigMap for realm
 kubectl create configmap "${CLUSTER}-realm-import" \
-  --from-file=helix-realm.json="$REALM_JSON" \
+  --from-file=$HELIX_JSON_REALM="$REALM_JSON" \
   -n "$NAMESPACE" \
   --dry-run=client -o yaml | kubectl apply -f - \
   && echo -e "${GREEN}✅ Realm ConfigMap created.${NC}" \
@@ -531,7 +602,7 @@ proxy: edge
 
 extraEnvVars:
   - name: KEYCLOAK_IMPORT
-    value: "/opt/keycloak/addon-configs/helix-realm.json"
+    value: "/opt/keycloak/$KEYCLOAK_REALMS_PATH/$HELIX_JSON_REALM"
   - name: KEYCLOAK_THEME
     value: "${CLUSTER}"
 
@@ -545,11 +616,11 @@ extraVolumes:
 
 extraVolumeMounts:
   - name: ${CLUSTER}-theme
-    mountPath: /opt/keycloak/themes/${CLUSTER}
+    mountPath: /opt/keycloak/$THEME_DIR
     readOnly: true
   - name: ${CLUSTER}-realm-import
-    mountPath: /opt/keycloak/addon-configs/helix-realm.json
-    subPath: helix-realm.json
+    mountPath: /opt/keycloak/$REALM_JSON
+    subPath: $HELIX_JSON_REALM
     readOnly: true
 
 resources:
@@ -577,20 +648,35 @@ yq . "$KEYCLOAK_VALUES_FILE"
 #############################################
 ### 🚀 Deploy Keycloak via Helm
 #############################################
-echo -e "\n🚀 Deploying Keycloak..."
+echo -e "\n🚀 Deploying Keycloak with Helm..."
 
 if ! helm upgrade --install "$KEYCLOAK_RELEASE" bitnami/keycloak \
   --namespace "$NAMESPACE" \
   --create-namespace \
   --values "$KEYCLOAK_VALUES_FILE" \
-  --timeout 3600s \
+  --timeout 600s \
   --wait; then
   echo -e "${RED}❌ Helm install failed!${NC}"
   echo "👉 Try running manually with --debug to diagnose:"
   echo "   helm upgrade --install $KEYCLOAK_RELEASE bitnami/keycloak -n $NAMESPACE --values $KEYCLOAK_VALUES_FILE --debug"
   exit 1
 fi
+echo -e "${GREEN}✅ Keycloak deployed successfully!${NC}"
+start_braille_spinner & SPINNER_PID=$! 
+wait_for_pods_ready "$NAMESPACE" "app.kubernetes.io/instance=$KEYCLOAK_RELEASE"
+kill "$SPINNER_PID" >/dev/null 2>&1 || true
+wait "$SPINNER_PID" 2>/dev/null || true
 
+
+# Wait up to 10 minutes for Keycloak pods (Bitnami uses the standard Helm label format)
+kubectl wait --namespace "$NAMESPACE" \
+  --for=condition=Ready pod \
+  -l "app.kubernetes.io/instance=$KEYCLOAK_RELEASE" \
+  --timeout=600s || {
+    echo -e "${RED}❌ Keycloak pods did not become ready in time!${NC}"
+    echo "🕵️‍♂️ Inspect with: kubectl get pods -n $NAMESPACE"
+    exit 1
+}
 #############################################
 ### ⏳ Wait for Pod Readiness
 #############################################
@@ -605,8 +691,9 @@ fi
 ### 🔐 Store Credentials in Vault
 #############################################
 echo -e "\n🔐 Storing Keycloak credentials in Vault..."
-
+wait_for_vault_ready
 enable_kv_if_missing
+# Ensure Vault is ready before storing secrets
 store_secret "secret/keycloak/admin" \
   username="${KC_ADMIN}" \
   password="${KC_PASS}" \

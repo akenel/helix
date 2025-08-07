@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: helix-theme
+  name: keycloak-realm-config 
   namespace: identity
 data:
   # Login theme files

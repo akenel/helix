@@ -1,13 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
-
-# 🎭 HELIX BEFORE-VS-AFTER DEMO
-# "How to Make Enterprise Architects Question Everything"
-# 💥 The Demo That Broke the DevOps World
-
-set -euo pipefail
-
 # Colors for maximum visual impact
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -20,6 +13,164 @@ BG_RED='\033[41m'
 BG_GREEN='\033[42m'
 BG_BLUE='\033[44m'
 NC='\033[0m'
+REEL_MODE=false
+[[ "${1:-}" == "--reel" ]] && REEL_MODE=true
+
+# 🎭 HELIX BEFORE-VS-AFTER DEMO
+RECORD_MODE=false
+[[ "${1:-}" == "--record" ]] && RECORD_MODE=true
+
+check_and_install_dependencies() {
+  local missing_deps=()
+  local dependencies=(asciinema agg)
+
+  # Check for each dependency
+  for dep in "${dependencies[@]}"; do
+    if ! command -v "$dep" &> /dev/null; then
+      missing_deps+=("$dep")
+    fi
+  done
+
+  # If no dependencies are missing, we're good to go.
+  if [[ ${#missing_deps[@]} -eq 0 ]]; then
+    return 0
+  fi
+
+  # Inform the user about the missing dependencies
+  echo -e "\n${YELLOW}⚠️  The following packages are required for the recording feature:${NC}"
+  for dep in "${missing_deps[@]}"; do
+    echo -e "${YELLOW} - $dep${NC}"
+  done
+
+  # Ask the user if they want to install them
+  echo -e "\n${CYAN}Would you like to install them now? (requires sudo password) [Y/n]${NC}"
+  read -r response
+  if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+    echo -e "\n${GREEN}Installing dependencies...${NC}"
+
+    # --- ADDED: Temporarily configure APT to be more robust ---
+    # Create a temporary APT configuration file to increase the timeout and retries
+    local apt_conf="/etc/apt/apt.conf.d/99helix-demo-timeout"
+    echo "Acquire::http::Timeout \"120\";" | sudo tee "$apt_conf" > /dev/null
+    echo "Acquire::http::Retries \"5\";" | sudo tee -a "$apt_conf" > /dev/null
+    
+    # Run apt-get update and install
+    sudo apt-get update
+    sudo apt-get install "${missing_deps[@]}" || true
+    
+    # --- ADDED: Clean up the temporary APT configuration file ---
+    sudo rm -f "$apt_conf"
+
+    # Check if the installation was successful
+    for dep in "${missing_deps[@]}"; do
+      if ! command -v "$dep" &> /dev/null; then
+        echo -e "\n${RED}❌ Failed to install $dep. Please install manually to use recording feature.${NC}"
+        return 1
+      fi
+    done
+
+    echo -e "\n${GREEN}Dependencies installed successfully!${NC}"
+    return 0
+  else
+    echo -e "\n${YELLOW}Recording will be skipped. Continuing without asciinema and agg.${NC}"
+    return 1
+  fi
+}
+
+# --- Main script logic (before any demo output) ---
+if $RECORD_MODE; then
+  if check_and_install_dependencies; then
+    # Redirect output for recording
+    exec > >(tee helix-demo.log)
+    exec 2>&1
+    echo -e "\n${CYAN}🚀 Recording demo to helix-demo.cast...${NC}"
+  else
+    # Fallback if installation failed or was declined
+    RECORD_MODE=false
+    echo -e "\n${YELLOW}Recording mode disabled.${NC}"
+  fi
+fi
+
+# functions
+show_system_specs() {
+  echo -e "\n${WHITE}🔍 SYSTEM ENVIRONMENT:${NC}"
+  echo -e "${CYAN}• OS:$(uname -srmo)"
+  echo -e "• CPU: $(lscpu | grep 'Model name' | awk -F ':' '{print $2}' | xargs)"
+  echo -e "• Cores: $(nproc)"
+  echo -e "• RAM: $(free -h --si | awk '/Mem:/ {print $2}')"
+  echo -e "• Docker: $(docker --version | cut -d',' -f1)"
+  echo -e "• Shell: $SHELL${NC}"
+}
+open_in_browser() {
+  local file="$1"
+  if [[ -f "$file" ]]; then
+    if command -v wslview &>/dev/null; then
+      wslview "$file" &>/dev/null & # Redirect output and run in background
+    elif command -v xdg-open &>/dev/null; then
+      xdg-open "$file" &>/dev/null & # Redirect output and run in background
+    else
+      echo -e "${YELLOW}⚠️ Cannot auto-open. Please manually open: $file${NC}"
+    fi
+  fi
+}
+
+simulate_enterprise_burn() {
+  echo -e "\n${RED}💸 Simulating Enterprise Cloud Spend...${NC}"
+  local total=0
+  for i in {1..10}; do
+    local increment=$((RANDOM % 90 + 10))
+    total=$((total + increment))
+    echo -ne "💣 Burning Budget: \$ $total\r"
+    sleep 0.5
+  done
+  echo -e "\n${GREEN}💰 Local Setup Cost: \$8 — Coffee not included ☕️${NC}"
+}
+show_random_tweets() {
+  # Get the directory where the script is located
+  local script_dir
+  script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+  # Construct the full path to the tweets file
+  local file="${script_dir}/helix.tweets"
+
+  echo -e "\n${MAGENTA}💬 REAL DEVELOPER QUOTES:${NC}"
+  if [[ -f "$file" ]]; then
+    shuf -n 3 "$file" | while read -r tweet; do
+      echo -e "${CYAN}💡 $tweet${NC}"
+      sleep 1
+    done
+  else
+    echo -e "${RED}⚠️ Missing helix.tweets file at: ${file}${NC}"
+  fi
+}
+# This function creates an HTML report from the demo log
+generate_html_report() {
+  REPORT_FILE="helix-demo.html" # Using the helix-demo.html filename
+  
+  cat <<EOF > "$REPORT_FILE"
+<html>
+<head>
+  <title>Helix Demo Report</title>
+  <style>body { font-family: monospace; background: #000; color: #0f0; padding: 2em; }</style>
+</head>
+<body>
+<pre>
+$(cat helix-demo.log)
+</pre>
+</body>
+</html>
+EOF
+
+  echo -e "\n${WHITE}📄 HTML report generated: ${REPORT_FILE}${NC}"
+}
+pause_or_wait() {
+  if $REEL_MODE; then
+    sleep "${1:-3}"
+  else
+    echo -e "${CYAN}↩️  Press ENTER to continue...${NC}"
+    read -r
+  fi
+}
 
 # Dramatic pause function
 dramatic_pause() {
@@ -55,13 +206,13 @@ show_comparison() {
     echo -e "${WHITE}═══════════════════════════════════════════════════════════════${NC}"
     
     echo -e "${BG_RED}${WHITE} 😭 ENTERPRISE HORROR STORY ${NC}"
-    echo -e "${RED}⏱️  Time: $enterprise_time${NC}"
+    echo -e "${RED}⏱️  Time: $enterprise_time${NC}"
     echo -e "${RED}💸 Pain Level: MAXIMUM${NC}"
     echo -e "${RED}🔥 $enterprise_pain${NC}"
     
     echo
     echo -e "${BG_GREEN}${WHITE} 🚀 HELIX MAGIC ✨ ${NC}"
-    echo -e "${GREEN}⏱️  Time: $helix_time${NC}"
+    echo -e "${GREEN}⏱️  Time: $helix_time${NC}"
     echo -e "${GREEN}💰 Cost: NEGLIGIBLE${NC}"
     echo -e "${GREEN}🎯 $helix_bliss${NC}"
     
@@ -83,14 +234,13 @@ show_nuclear_comparison() {
 clear
 echo -e "${MAGENTA}"
 cat << 'EOF'
-██╗  ██╗███████╗██╗     ██╗██╗  ██╗    ██████╗ ███████╗███╗   ███╗ ██████╗ 
-██║  ██║██╔════╝██║     ██║╚██╗██╔╝    ██╔══██╗██╔════╝████╗ ████║██╔═══██╗
-███████║█████╗  ██║     ██║ ╚███╔╝     ██║  ██║█████╗  ██╔████╔██║██║   ██║
-██╔══██║██╔══╝  ██║     ██║ ██╔██╗     ██║  ██║██╔══╝  ██║╚██╔╝██║██║   ██║
-██║  ██║███████╗███████╗██║██╔╝ ██╗    ██████╔╝███████╗██║ ╚═╝ ██║╚██████╔╝
-╚═╝  ╚═╝╚══════╝╚══════╝╚═╝╚═╝  ╚═╝    ╚═════╝ ╚══════╝╚═╝     ╚═╝ ╚═════╝ 
-                                                                              
-    "BEFORE vs AFTER: How One Script Destroyed Enterprise Consulting"
+██╗  ██╗███████╗██╗     ██╗██╗  ██╗      ██████╗ ███████╗███╗   ███╗ ██████╗ 
+██║  ██║██╔════╝██║     ██║╚██╗██╔╝      ██╔══██╗██╔════╝████╗ ████║██╔═══██╗
+███████║█████╗  ██║     ██║ ╚███╔╝       ██║  ██║█████╗  ██╔████╔██║██║   ██║
+██╔══██║██╔══╝  ██║     ██║ ██╔██╗       ██║  ██║██╔══╝  ██║╚██╔╝██║██║   ██║
+██║  ██║███████╗███████╗██║██╔╝ ██╗      ██████╔╝███████╗██║ ╚═╝ ██║╚██████╔╝
+╚═╝  ╚═╝╚══════╝╚══════╝╚═╝╚═╝  ╚═╝      ╚═════╝ ╚══════╝╚═╝     ╚═╝ ╚═════╝ 
+      "BEFORE vs AFTER: How One Script Destroyed Enterprise Consulting"
 EOF
 echo -e "${NC}"
 
@@ -98,10 +248,10 @@ echo -e "\n${WHITE}Welcome to the most shocking DevOps comparison ever created..
 type_text "Prepare to witness the impossible..." 0.1
 
 echo -e "\n${YELLOW}⚠️  WARNING: This demo has caused the following side effects:${NC}"
-echo -e "${RED}   • Enterprise architects questioning their careers${NC}"
-echo -e "${RED}   • DevOps consultants hiding their LinkedIn profiles${NC}"
-echo -e "${RED}   • German engineering teams learning English curse words${NC}"
-echo -e "${RED}   • AWS sales reps crying into their commission reports${NC}"
+echo -e "${RED}  • Enterprise architects questioning their careers${NC}"
+echo -e "${RED}  • DevOps consultants hiding their LinkedIn profiles${NC}"
+echo -e "${RED}  • German engineering teams learning English curse words${NC}"
+echo -e "${RED}  • AWS sales reps crying into their commission reports${NC}"
 
 echo -e "\n${CYAN}Press ENTER to proceed at your own risk...${NC}"
 read -r
@@ -201,42 +351,58 @@ echo -e "\n📊 COST COMPARISON (Monthly):"
 echo -e "┌─────────────────────────────────────────────────────────────┐"
 echo -e "│  ${BG_RED}${WHITE} ENTERPRISE CLOUD HORROR ${NC}                                  │"
 echo -e "├─────────────────────────────────────────────────────────────┤"
-echo -e "│  AWS EKS Control Plane:           \$ 73/month                │"
-echo -e "│  Worker Nodes (3x m5.large):     \$ 310/month                │"
-echo -e "│  Load Balancer:                   \$ 18/month                │"
-echo -e "│  EBS Storage (100GB):             \$ 10/month                │"
-echo -e "│  Data Transfer:                   \$ 50/month                │"
-echo -e "│  CloudWatch Logs:                \$ 25/month                 │"
-echo -e "│  Backup Storage:                  \$ 15/month                │"
+echo -e "│  AWS EKS Control Plane:          $ 73/month                 │"
+echo -e "│  Worker Nodes (3x m5.large):     $ 310/month                │"
+echo -e "│  Load Balancer:                  $ 18/month                 │"
+echo -e "│  EBS Storage (100GB):            $ 10/month                 │"
+echo -e "│  Data Transfer:                  $ 50/month                 │"
+echo -e "│  CloudWatch Logs:                $ 25/month                 │"
+echo -e "│  Backup Storage:                 $ 15/month                 │"
 echo -e "│  ──────────────────────────────────────────                 │"
-echo -e "│  ${RED}TOTAL: \$ 501/month = \$ 6,012/year${NC}                          │"
+echo -e "│  ${RED}TOTAL: $ 501/month = $ 6,012/year${NC}                          │"
 echo -e "└─────────────────────────────────────────────────────────────┘"
 
-echo -e "\n${RED}☝️  Look at those numbers... \$501 PER MONTH! 💸${NC}"
+echo -e "\n${RED}☝️  Look at those numbers... $ 501 PER MONTH! 💸${NC}"
 echo -e "\n${CYAN}Now brace yourself for the Helix magic... (Press ENTER or wait 6 seconds)${NC}"
 read -t 6 -r || true
 
-echo -e "\n┌─────────────────────────────────────────────────────────────┐"
-echo -e "│  ${BG_GREEN}${WHITE} HELIX LAPTOP MAGIC ✨ ${NC}                               
+echo -e "┌─────────────────────────────────────────────────────────────┐"
+echo -e "│  ${BG_GREEN}${WHITE} HELIX LAPTOP MAGIC ✨ ${NC}                                    │"
 echo -e "├─────────────────────────────────────────────────────────────┤"
-echo -e "│  Electricity (24/7):              \$ 8/month                  │"
-echo -e "│  Internet (already have):         \$ 0/month                  │"
-echo -e "│  Cloud Storage (none needed):     \$ 0/month                  │"
-echo -e "│  Licensing (open source):         \$ 0/month                  │"
-echo -e "│  ──────────────────────────────────────────                    │"
-echo -e "│  ${GREEN}TOTAL: \$ 8/month = \$ 96/year${NC}                              │"
+echo -e "│  Laptop Cost (one-time):            $ 1,200                 │"
+echo -e "│  Docker Desktop (already have):     $ 0/month               │"
+echo -e "│  Kubernetes (built-in):             $ 0/month               │"
+echo -e "│  Popeye Validation (free):          $ 0/month               │"
+echo -e "│  Monitoring (built-in):             $ 0/month               │"
+echo -e "│  Secrets Management (built-in):     $ 0/month               │"
+echo -e "│  Identity Management (built-in):    $ 0/month               │"
+echo -e "│  Developer Experience (free):       $ 0/month               │"
+echo -e "│  Local Storage (SSD):               $ 0/month               │"
+echo -e "│  Backup (built-in):                 $ 0/month               │"
+echo -e "│  Network (local):                   $ 0/month               │"
+echo -e "│  Monitoring (built-in):             $ 0/month               │"
+echo -e "│  Logging (built-in):                $ 0/month               │"
+echo -e "│  CI/CD (built-in):                  $ 0/month               │"
+echo -e "│  Developer Tools (free):            $ 0/month               │"
+echo -e "│  Training (free online resources):  $ 0/month               │"
+echo -e "│  Electricity (24/7):                $ 8/month               │"
+echo -e "│  Internet (already have):           $ 0/month               │"
+echo -e "│  Cloud Storage (none needed):       $ 0/month               │"
+echo -e "│  Licensing (open source):           $ 0/month               │"
+echo -e "│  ────────────────────────────────────────────               │"
+echo -e "│  ${GREEN}TOTAL: $ 8/month = $ 96/year${NC}                               │"
 echo -e "└─────────────────────────────────────────────────────────────┘"
 
 echo -e "\n${GREEN}🤯 EIGHT DOLLARS! Your coffee budget beats enterprise cloud! ☕️${NC}"
 echo -e "\n${CYAN}Ready for the financial bomb? (Press ENTER or wait 5 seconds)${NC}"
 read -t 5 -r || true
 
-echo -e "\n${MAGENTA}💥💥💥💥💥💥💥💥�💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥${NC}"
-echo -e "${MAGENTA}�💰 ANNUAL SAVINGS: \$ 5,916 💰${NC}"
-echo -e "${MAGENTA}🏆 ROI: 6,150% 🏆${NC}"
+echo -e "\n${MAGENTA}💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥${NC}"
+echo -e "${MAGENTA} 💰 ANNUAL SAVINGS: $ 5,916 💰${NC}"
+echo -e "${MAGENTA} 🏆 ROI: 6,150% 🏆${NC}"
 echo -e "${MAGENTA}💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥${NC}"
 
-echo -e "\n${WHITE}Let that sink in... \$5,916 saved EVERY YEAR! 🤑${NC}"
+echo -e "\n${WHITE}Let that sink in... $ 5,916 saved EVERY YEAR! 🤑${NC}"
 dramatic_pause 5
 
 echo -e "\n${WHITE}⚡ PERFORMANCE COMPARISON:${NC}"
@@ -248,8 +414,8 @@ read -t 5 -r || true
 cat << EOF
 
 🚀 POD STARTUP TIMES:
-   Enterprise Cloud: 15-45 seconds (network overhead)
-   Helix Laptop:     2-8 seconds  (native speed)
+    Enterprise Cloud: 15-45 seconds (network overhead)
+    Helix Laptop:     2-8 seconds  (native speed)
 
 EOF
 
@@ -258,10 +424,10 @@ echo -e "\n${CYAN}But wait, there's more... (Press ENTER or wait 4 seconds)${NC}
 read -t 4 -r || true
 
 cat << EOF
-   
+    
 🌐 NETWORK LATENCY:
-   Enterprise Cloud: 50-200ms (internet hops)
-   Helix Laptop:     0.1ms     (localhost magic)
+    Enterprise Cloud: 50-200ms (internet hops)
+    Helix Laptop:      0.1ms      (localhost magic)
 
 EOF
 
@@ -270,14 +436,14 @@ echo -e "\n${CYAN}The performance destruction continues... (Press ENTER or wait 
 read -t 4 -r || true
 
 cat << EOF
-   
+    
 📦 IMAGE PULLS:
-   Enterprise Cloud: 30-120 seconds (registry downloads)
-   Helix Laptop:     1-5 seconds   (local cache)
-   
+    Enterprise Cloud: 30-120 seconds (registry downloads)
+    Helix Laptop:      1-5 seconds   (local cache)
+    
 🔧 DEPLOYMENT TIME:
-   Enterprise Cloud: 5-15 minutes (pipeline + approvals)
-   Helix Laptop:     30 seconds   (direct deployment)
+    Enterprise Cloud: 5-15 minutes (pipeline + approvals)
+    Helix Laptop:      30 seconds   (direct deployment)
 
 EOF
 
@@ -293,29 +459,29 @@ read -t 6 -r || true
 cat << EOF
 
 📚 ENTERPRISE KUBERNETES LEARNING PATH:
-   ❌ 6 months AWS training ($ 5,000)
-   ❌ 3 months Terraform certification ($ 2,000)  
-   ❌ 4 months Helm chart mastery (sanity loss)
-   ❌ 2 months RBAC understanding (therapy required)
-   ❌ 12 months debugging cloud networking (hair loss)
-   ────────────────────────────────────────────────
-   💸 Total: $ 7,000 + emotional damage
+    ❌ 6 months AWS training ($ 5,000)
+    ❌ 3 months Terraform certification ($ 2,000)    
+    ❌ 4 months Helm chart mastery (sanity loss)
+    ❌ 2 months RBAC understanding (therapy required)
+    ❌ 12 months debugging cloud networking (hair loss)
+    ────────────────────────────────────────────────
+    💸 Total: $ 7,000 + emotional damage
 
 EOF
 
-echo -e "${RED}💸 \$7,000 and 27 months of your LIFE! Plus therapy costs! 💸${NC}"
+echo -e "${RED}💸 $ 7,000 and 27 months of your LIFE! Plus therapy costs! 💸${NC}"
 echo -e "\n${CYAN}Now witness the Helix enlightenment... (Press ENTER or wait 5 seconds)${NC}"
 read -t 5 -r || true
 
 cat << EOF
 
 🎯 HELIX LEARNING PATH:
-   ✅ 1 day: Clone repo, run script
-   ✅ 1 week: Understand everything  
-   ✅ 1 month: Teaching others
-   ✅ 3 months: Enterprise consulting offers
-   ────────────────────────────────────────────────
-   💰 Total: Free + career advancement
+    ✅ 1 day: Clone repo, run script
+    ✅ 1 week: Understand everything    
+    ✅ 1 month: Teaching others
+    ✅ 3 months: Enterprise consulting offers
+    ────────────────────────────────────────────────
+    💰 Total: Free + career advancement
 
 EOF
 
@@ -349,26 +515,26 @@ echo -e "${WHITE}═════════════════════
 cat << EOF
 
 📈 SINCE HELIX LAUNCH:
-   🔥 647 enterprise consulting contracts cancelled
-   💼 23 DevOps consultants changed careers  
-   🏢 89 companies fired their "cloud experts"
-   📚 156 Kubernetes courses became obsolete
-   💸 $ 2.3M saved by developers worldwide
-   🎓 1,247 junior devs now outperform seniors
-   
+    🔥 647 enterprise consulting contracts cancelled
+    💼 23 DevOps consultants changed careers    
+    🏢 89 companies fired their "cloud experts"
+    📚 156 Kubernetes courses became obsolete
+    💸 $ 2.3M saved by developers worldwide
+    🎓 1,247 junior devs now outperform seniors
+    
 🚨 ENTERPRISE RESPONSE:
-   ❌ "This is impossible" (proved wrong)
-   ❌ "It's not production ready" (it is)
-   ❌ "No enterprise features" (has everything)
-   ❌ "Won't scale" (scales better than cloud)
-   ❌ "No support" (community is amazing)
-   
+    ❌ "This is impossible" (proved wrong)
+    ❌ "It's not production ready" (it is)
+    ❌ "No enterprise features" (has everything)
+    ❌ "Won't scale" (scales better than cloud)
+    ❌ "No support" (community is amazing)
+    
 ✅ REALITY CHECK:
-   ✅ Works better than $ 100k solutions
-   ✅ Faster than enterprise teams
-   ✅ Costs 99.8% less
-   ✅ Actually understandable
-   ✅ No vendor lock-in
+    ✅ Works better than $ 100k solutions
+    ✅ Faster than enterprise teams
+    ✅ Costs 99.8% less
+    ✅ Actually understandable
+    ✅ No vendor lock-in
 
 EOF
 
@@ -389,26 +555,26 @@ cat << 'EOF'
 🔥 TWEET TEMPLATES (COPY & PASTE):
 
 1. "Just replaced our $876/month AWS EKS with a $8/month laptop setup. 
-   Performance is BETTER. Setup took 20 minutes. 
-   Enterprise architects hate this one trick! #HelixVsEnterprise"
+    Performance is BETTER. Setup took 20 minutes. 
+    Enterprise architects hate this one trick! #HelixVsEnterprise"
 
 2. "German engineering team: 'Kubernetes setup takes 6 months'
-   WSL Ubuntu kid: 'Hold my coffee ☕️'
-   *deploys production cluster during breakfast*
-   #PopeyeValidation #DevOpsRevolution"
+    WSL Ubuntu kid: 'Hold my coffee ☕️'
+    *deploys production cluster during breakfast*
+    #PopeyeValidation #DevOpsRevolution"
 
 3. "Enterprise consultant: '$200k for Kubernetes project'
-   Helix script: 'chmod +x setup-helix.sh && ./setup-helix.sh'
-   Consultant: *updates LinkedIn to 'seeking new opportunities'*"
+    Helix script: 'chmod +x setup-helix.sh && ./setup-helix.sh'
+    Consultant: *updates LinkedIn to 'seeking new opportunities'*"
 
 4. "Plot twist: The most reliable Kubernetes cluster runs in your bedroom,
-   not AWS us-east-1. Latency: 0.1ms. Downtime: What's that?
-   #HelixPlatform #CloudIsntAlwaysTheAnswer"
+    not AWS us-east-1. Latency: 0.1ms. Downtime: What's that?
+    #HelixPlatform #CloudIsntAlwaysTheAnswer"
 
 5. "Enterprise: 47 meetings to discuss Kubernetes strategy
-   Helix: One script to deploy production cluster
-   Time saved: 6 months + sanity
-   #EnterpriseVsReality"
+    Helix: One script to deploy production cluster
+    Time saved: 6 months + sanity
+    #EnterpriseVsReality"
 
 EOF
 
@@ -444,31 +610,37 @@ echo -e "${GREEN}═════════════════════
 cat << 'EOF'
 
 🏆 WHAT HELIX PROVES:
-   ✅ Local development can beat cloud enterprise
-   ✅ Simple scripts can replace 6-month projects
-   ✅ Open source can outperform expensive licenses
-   ✅ One person can outperform enterprise teams
-   ✅ Understanding beats complexity
-   ✅ Physics beats marketing (localhost is faster)
+    ✅ Local development can beat cloud enterprise
+    ✅ Simple scripts can replace 6-month projects
+    ✅ Open source can outperform expensive licenses
+    ✅ One person can outperform enterprise teams
+    ✅ Understanding beats complexity
+    ✅ Physics beats marketing (localhost is faster)
 
 🚀 WHAT YOU GET:
-   ✅ Production-ready Kubernetes in 20 minutes
-   ✅ Identity management that actually works
-   ✅ Secrets management without PhD requirements
-   ✅ Monitoring that tells you useful things
-   ✅ Deployment pipeline that doesn't break
-   ✅ Developer experience that sparks joy
+    ✅ Production-ready Kubernetes in 20 minutes
+    ✅ Identity management that actually works
+    ✅ Secrets management without PhD requirements
+    ✅ Monitoring that tells you useful things
+    ✅ Deployment pipeline that doesn't break
+    ✅ Developer experience that sparks joy
 
 💰 WHAT YOU SAVE:
-   ✅ $5,916/year in cloud costs
-   ✅ 6 months of project time
-   ✅ $7,000 in training costs
-   ✅ Infinite hours of debugging cloud networking
-   ✅ Your sanity and hair
-   ✅ Your faith in simple solutions
+    ✅ $5,916/year in cloud costs
+    ✅ 6 months of project time
+    ✅ $7,000 in training costs
+    ✅ Infinite hours of debugging cloud networking
+    ✅ Your sanity and hair
+    ✅ Your faith in simple solutions
 
 EOF
-
+simulate_enterprise_burn
+pause_or_wait 4
+show_random_tweets
+pause_or_wait 3
+show_system_specs
+pause_or_wait 4
+echo -e "\n${WHITE}🎉 DEMO COMPLETE! 🎉${NC}"
 echo -e "\n${MAGENTA}🎉 CONGRATULATIONS! 🎉${NC}"
 echo -e "${WHITE}You've just witnessed the demo that broke the DevOps world!${NC}"
 
@@ -495,4 +667,45 @@ echo -e "\n${MAGENTA}💪 Popeye says: 'I yam what I yam, and Helix beats enterp
 
 dramatic_pause 3
 
-echo -e "\n${WHITE}✨ Demo complete. The world will never be the same. ✨${NC}"
+
+# --- START FINAL REPORT GENERATION ---
+# All demo content is now logged to helix-demo.log.
+# Now we can safely call the function to create the HTML report.
+# Note: I have removed the redundant `cat <<EOF ...` block here.
+# The generate_html_report function is now doing the work.
+generate_html_report
+
+open_in_browser "./helix-demo.html"
+echo -e "\n${WHITE}💻 Helix Report generated: helix-demo.html${NC}"
+echo -e "${WHITE}📖 Read it, share it, and watch the enterprise crumble!${NC}"
+echo -e "\n${WHITE}Thank you for witnessing the impossible!${NC}"
+echo -e "${WHITE}Stay tuned for more Helix magic!${NC}"
+
+# Check for existing recording
+if [[ -f helix-demo.cast ]]; then
+  echo -e "${YELLOW}⚠️ helix-demo.cast already exists. Overwrite it? (y/N)${NC}"
+  read -r confirm
+  [[ "$confirm" =~ ^[Yy]$ ]] || exit 0
+fi
+
+# Record terminal session
+asciinema rec --overwrite -t "Helix: Before vs After" helix-demo.cast
+echo -e "\n${WHITE}🎥 Recording saved as helix-demo.cast${NC}"
+
+# Convert to webm or mp4 using agg (if available)
+if command -v agg >/dev/null 2>&1; then
+  agg --theme solarized-dark helix-demo.cast -o helix-demo.webm
+  echo -e "\n${WHITE}🎬 Video created: helix-demo.webm${NC}"
+elif command -v docker >/dev/null 2>&1; then
+  docker run --rm -v "$PWD:/data" asciinema/asciicast2gif \
+    -t solarized-dark helix-demo.cast helix-demo.gif && \
+  ffmpeg -y -i helix-demo.gif -movflags faststart helix-demo.mp4
+  echo -e "\n${WHITE}🎬 MP4 created: helix-demo.mp4${NC}"
+else
+  echo -e "${YELLOW}⚠️ No converter available (agg/docker). Cast file only.${NC}"
+fi
+
+# Final message
+echo -e "\n${CYAN}↩️ Press any key to return to the Helix Menu...${NC}"
+read -n 1 -s -r
+exit 0

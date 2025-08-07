@@ -15,7 +15,6 @@ CONFIG_FILE="${ADDON_CONFIGS_DIR}/config.yaml"
 LOG_DIR="${ADDON_CONFIGS_DIR}/logs"
 ROOT_DIR="$(realpath "${SCRIPT_DIR}/../..")"
 FUNCS_DIR="${SCRIPT_DIR}/functions"
-source \\wsl.localhost\Ubuntu\home\angel\helix_v3\cli\helixctl
 print_random_banner
 # Source function libraries if they exist
 [[ -f "${FUNCS_DIR}/postgres.sh" ]] && source "${FUNCS_DIR}/postgres.sh"

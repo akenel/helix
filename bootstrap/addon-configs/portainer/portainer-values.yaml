@@ -1,4 +1,4 @@
-# ~/helix_v3/bootstrap/addon-configs/portainer/portainer-values.yaml
+# ~/helix/bootstrap/addon-configs/portainer/portainer-values.yaml
 persistence:
   enabled: true
   storageClass: "local-path"

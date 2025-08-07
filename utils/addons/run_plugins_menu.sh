@@ -3,8 +3,12 @@ set -euo pipefail
 trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
 # bootstrap\utils\run_plugins_menu.sh
 set -euo pipefail
-echo "🚀 RUNNING: helix_v3\bootstrap\utils\run_plugins_menu.sh"
+echo "🚀 RUNNING: ./bootstrap/utils/run_plugins_menu.sh"
+HELIX_ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+echo "HELIX_ROOT_DIR: $HELIX_ROOT_DIR"
+
 CONFIG_FILE="${HELIX_ROOT_DIR}/bootstrap/addon-configs/services.yaml"
+echo "Using configuration file: $CONFIG_FILE"
 INSTALL_SCRIPT="${HELIX_ROOT_DIR}/bootstrap/addon-configs/install-service.sh"
 sleep 8
 # Use yq to list enabled plugins

@@ -15,7 +15,7 @@ SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]}")"
 SCRIPT_DIR="$(dirname "${SCRIPT_PATH}")"
 DEPLOY_PHASES_DIR="${SCRIPT_DIR}"
 
-# Go two levels up to get the project root (helix_v3/)
+# Go two levels up to get the project root (helix/)
 HELIX_ROOT_DIR="$(realpath "$SCRIPT_DIR/../..")"
 export HELIX_ROOT_DIR
 
@@ -39,14 +39,19 @@ echo "🐧 UTILS_DIR: $UTILS_DIR"
 source "${UTILS_DIR}/core/spinner_utils.sh"
 source "${UTILS_DIR}/core/print_helix_banner.sh"
 source "${UTILS_DIR}/core/deploy-footer.sh"
-source "${UTILS_DIR}/core/cluster_info.sh"
-
+source "${UTILS_DIR}/bootstrap/cluster_info.sh"
 
 echo "🧭 🚀 🌍 🔐 RUNNING bootstrap\deployment-phases\03-vault-bootstrap-unseal.sh"
 
 export SPINNER_FRAMES="🧭 🚀 🌍 🔐"
 export SPINNER_INTERVAL=0.2
-trap stop_spinner EXIT
+trap cleanup_spinner_on_exit EXIT
+
+cleanup_spinner_on_exit() {
+  local exit_status=$?
+  stop_spinner $exit_status
+}
+
 DEBUG=false
 for arg in "$@"; do
   case "$arg" in
@@ -140,7 +145,7 @@ fi
 # Helm Install/Upgrade
 # ─────────────────────────────────────────────
   OPERATION_MSG="📦 Installing or upgrading Vault via Helm..."
-#  start_spinner "🔧 $OPERATION_MSG..."
+  start_spinner "🔧 $OPERATION_MSG..."
 
       REPO_NAME="hashicorp"
       REPO_URL="https://helm.releases.hashicorp.com"
@@ -350,6 +355,6 @@ echo "✅ Saved Vault environment to $VAULT_ENV_FILE"
 echo "$ROOT_TOKEN" > "$VAULT_ROOT_TOKEN_FILE"
 chmod 600 "$VAULT_ROOT_TOKEN_FILE"
 echo "✅ Saved Vault Root Token to $VAULT_ROOT_TOKEN_FILE"
-
+exit 0
 # Optional: also update .env file (only if it exists already)
 # cp "$VAULT_ENV_FILE" "$VAULT_ENV_FILE" 2>/dev/null || true

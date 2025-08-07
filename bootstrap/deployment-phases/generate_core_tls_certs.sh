@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
-# \\wsl.localhost\Ubuntu\home\angel\helix_v3\utils\generate_core_tls_certs.sh
+# \utils\generate_core_tls_certs.sh
 set -euo pipefail # Exit on error, unset variables, and pipeline errors
 echo "⚡️ Starting bootstrap\utils\01b_generate_core_tls_certs.sh"
 # --- Logging Functions ---

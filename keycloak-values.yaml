@@ -1,0 +1,15 @@
+auth:
+  adminUser: admin
+  adminPassword: admin
+
+postgresql:
+  enabled: false
+
+externalDatabase:
+  host: keycloak-postgres.identity.svc.cluster.local
+  user: pgadmin
+  password: supersecurepassword
+  database: keycloakdb
+
+service:
+  type: ClusterIP

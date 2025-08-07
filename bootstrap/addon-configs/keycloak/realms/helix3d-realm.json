@@ -1,0 +1,102 @@
+{
+  "realm": "helix3d",
+  "enabled": true,
+  "sslRequired": "external",
+  "loginTheme": "keycloak",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "verifyEmail": false,
+  "bruteForceProtected": true,
+  "users": [
+    {
+      "username": "designer",
+      "enabled": true,
+      "email": "designer@helix.local",
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "designer123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["designer"]
+    },
+    {
+      "username": "qa",
+      "enabled": true,
+      "email": "qa@helix.local",
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "qa123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["qa"]
+    },
+    {
+      "username": "prod",
+      "enabled": true,
+      "email": "prod@helix.local",
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "prod123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["production"]
+    }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "designer",
+        "description": "Role for 3D designers"
+      },
+      {
+        "name": "qa",
+        "description": "Quality assurance engineers"
+      },
+      {
+        "name": "production",
+        "description": "Production team"
+      },
+      {
+        "name": "admin",
+        "description": "Platform administrator"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "3d-dashboard",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": true,
+      "redirectUris": ["*"],
+      "webOrigins": ["*"],
+      "baseUrl": "/dashboard",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "defaultClientScopes": ["profile", "email"]
+    },
+    {
+      "clientId": "vault-integration",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "vault-client-secret",
+      "redirectUris": ["https://vault.helix/*"],
+      "webOrigins": ["https://vault.helix"],
+      "clientAuthenticatorType": "client-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "defaultClientScopes": ["profile", "email"]
+    }
+  ]
+}

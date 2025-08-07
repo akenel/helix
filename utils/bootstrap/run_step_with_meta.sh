@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 trap 'echo "❌ Error in $0 on line $LINENO — aborting."' ERR
-# 📜 /home/angel/helix_v3/utils/bootstrap/run_step_with_meta.sh
+# 📜 /home/angel/helix/utils/bootstrap/run_step_with_meta.sh
 # Sherlock-enhanced for bulletproof execution
 
-echo "Inside $HOME/helix_v3/utils/bootstrap/run_step_with_meta.sh with arguments: $@"
+echo "Inside $HOME/helix/utils/bootstrap/run_step_with_meta.sh with arguments: $@"
 
 # ─── 🧠 Helper Functions ─────────────────────────
 
@@ -51,11 +51,11 @@ fi
 # ─── 🔍 Resolve the Correct Script ───────────────
 
 SEARCH_DIRS=(
-    "$HOME/helix_v3/bootstrap/utils"
-    "$HOME/helix_v3/bootstrap/tests"
-    "$HOME/helix_v3/bootstrap/deployment-phases"
-    "$HOME/helix_v3/bootstrap/deployment-phases/post-scripts"
-    "$HOME/helix_v3/bootstrap/support"
+    "$HOME/helix/bootstrap/utils"
+    "$HOME/helix/bootstrap/tests"
+    "$HOME/helix/bootstrap/deployment-phases"
+    "$HOME/helix/bootstrap/deployment-phases/post-scripts"
+    "$HOME/helix/bootstrap/support"
 )
 
 if [[ ! -x "$SCRIPT_PATH" ]]; then

@@ -1,0 +1,21 @@
+{
+  "clientId": "account",
+  "protocol": "openid-connect",
+  "enabled": true,
+  "publicClient": true,
+  "redirectUris": ["https://keycloak.helix/realms/helix/account/*"],
+  "webOrigins": ["https://keycloak.helix"],
+  "baseUrl": "/realms/helix/account",
+  "rootUrl": "https://keycloak.helix",
+  "standardFlowEnabled": true,
+  "directAccessGrantsEnabled": false,
+  "attributes": {
+    "pkce.code.challenge.method": "S256",
+    "post.logout.redirect.uris": "+"
+  },
+
+  "clientRoles": {
+    "realm-management": ["realm-admin"],
+    "account": ["manage-account"]
+  }
+}

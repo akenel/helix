@@ -16,7 +16,7 @@ SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]}")"
 SCRIPT_DIR="$(dirname "${SCRIPT_PATH}")"
 DEPLOY_PHASES_DIR="${SCRIPT_DIR}"
 
-# Go two levels up to get the project root (helix_v3/)
+# Go two levels up to get the project root (helix/)
 HELIX_ROOT_DIR="$(realpath "$SCRIPT_DIR/../..")"
 export HELIX_ROOT_DIR
 
@@ -40,7 +40,7 @@ echo "🐧 UTILS_DIR: $UTILS_DIR"
 source "${UTILS_DIR}/core/spinner_utils.sh"
 source "${UTILS_DIR}/core/print_helix_banner.sh"
 source "${UTILS_DIR}/core/deploy-footer.sh"
-source "${UTILS_DIR}/core/cluster_info.sh"
+source "${UTILS_DIR}/bootstrap/cluster_info.sh"
 
 echo "🚀 RUNNING Bootstrap Utilities via: ${UTILS_DIR}/cluster_info.sh"
 # ── Pre-Checks ───────────────────────────────────────────────────────────────
@@ -57,67 +57,78 @@ check_dependencies() {
 }
 # ── Cluster Management ────────────────────────────────────────────────────────
 create_k3d_cluster() {
-    local cluster_name=$1
-    local registry_name=$2
-    local tls_domains=$3
+  local cluster_name=$1
+  local registry_name=$2
+  local tls_domains=$3
+  local MAX_RETRIES=10
+  local RETRY_DELAY=5
 
-    # Check if the cluster already exists and prompt user for action
-    if k3d cluster list | grep -q "$cluster_name"; then
-        echo "⚠️  Cluster '$cluster_name' already exists."
-        read -p "❓ Do you want to delete and recreate it? (y/n): " confirm
-        if [[ "$confirm" =~ ^[Yy]$ ]]; then
-            echo "🗑️  Deleting cluster '$cluster_name'..."
-            k3d cluster delete "$cluster_name"
-            # Wait for deletion to complete
-            echo -n "⏳ Waiting for cluster to be fully deleted..."
-            for i in {1..20}; do
-                sleep 1
-                if ! k3d cluster list | grep -q "$cluster_name"; then
-                    echo " ✅"
-                    break
-                fi
-                echo -n "."
-                if [[ $i -eq 20 ]]; then
-                    echo -e "\n❌ Cluster '$cluster_name' was not deleted after 20 seconds. Aborting."
-                    return 1
-                fi
-            done
-            echo "✅ Cluster '$cluster_name' deleted."
-        else
-            echo "🚪 Exiting to main menu. Cluster was not deleted."
-            return 0
+  # Check if the cluster exists
+  if k3d cluster list | grep -q "$cluster_name"; then
+    echo "⚠️  Cluster '$cluster_name' already exists."
+    read -p "❓ Do you want to delete and recreate it? (y/n): " confirm
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+      echo "🗑️  Deleting cluster '$cluster_name'..."
+
+      for attempt in $(seq 1 $MAX_RETRIES); do
+        echo "🔄 Attempt $attempt to delete cluster..."
+        k3d cluster delete "$cluster_name" || true
+
+        sleep "$RETRY_DELAY"
+
+        # Check if any k3d-* containers remain
+        if docker ps -a --format '{{.Names}}' | grep -q "k3d-${cluster_name}-server"; then
+          echo "⏳ Waiting: server container still present..."
+
+          # Force kill and remove
+          docker rm -f "k3d-${cluster_name}-server-0" 2>/dev/null || true
         fi
+
+        # Check if volume is still mounted
+        if docker volume ls --format '{{.Name}}' | grep -q "k3d-${cluster_name}-images"; then
+          echo "💣 Removing leftover volume..."
+          docker volume rm "k3d-${cluster_name}-images" 2>/dev/null || true
+        fi
+
+        # Check again if cluster is truly gone
+        if ! k3d cluster list | grep -q "$cluster_name" && \
+           ! docker ps -a | grep -q "k3d-${cluster_name}-server"; then
+          echo "✅ Cluster '$cluster_name' deleted successfully."
+          break
+        fi
+
+        if [[ $attempt -eq $MAX_RETRIES ]]; then
+          echo -e "${RED}❌ Failed to fully delete cluster after $MAX_RETRIES attempts.${NC}"
+          return 1
+        fi
+      done
     else
-        echo "🌱 No existing cluster named '$cluster_name' found. Proceeding to create it."
+      echo "🚪 Exiting to main menu. Cluster was not deleted."
+      exit 0
     fi
-    # Create the local registry using k3d directly and check with k3d registry list
-    if ! k3d registry list | grep -q "$registry_name"; then
-        echo "📦 Creating local registry: $registry_name"
-        k3d registry create "$registry_name"
-    else
-        echo "📦 Registry '$registry_name' already exists."
-    fi
+  else
+    echo "🌱 No existing cluster named '$cluster_name' found. Proceeding to create it."
+  fi
 
-    # Create the K3d cluster with the specified TLS SANs
-    echo "🚀 Creating k3d cluster '$cluster_name' with TLS SANs trusted by mkcert CA..."
-KEYCLOAK_THEMES_PATH="$(realpath "bootstrap/addon-configs/keycloak/themes")"
-KEYCLOAK_REALMS_PATH="$(realpath "bootstrap/addon-configs/keycloak/realms")"
+  # Create registry if needed
+  if ! k3d registry list | grep -q "$registry_name"; then
+    echo "📦 Creating local registry: $registry_name"
+    k3d registry create "$registry_name"
+  else
+    echo "📦 Registry '$registry_name' already exists."
+  fi
 
-EXTRA_MOUNTS=""
+  # Mount Keycloak themes and realms if available
+  local KEYCLOAK_THEMES_PATH="$(realpath "bootstrap/addon-configs/keycloak/themes")"
+  local KEYCLOAK_REALMS_PATH="$(realpath "bootstrap/addon-configs/keycloak/realms")"
+  local EXTRA_MOUNTS=""
 
-if [[ -d "$KEYCLOAK_THEMES_PATH" ]]; then
-  EXTRA_MOUNTS+=" --volume $KEYCLOAK_THEMES_PATH:/helix-assets"
-else
-  echo "⚠️ Skipping mount: $KEYCLOAK_THEMES_PATH not found"
-fi
+  [[ -d "$KEYCLOAK_THEMES_PATH" ]] && EXTRA_MOUNTS+=" --volume $KEYCLOAK_THEMES_PATH:/helix-assets" || echo "⚠️ Skipping theme mount"
+  [[ -d "$KEYCLOAK_REALMS_PATH" ]] && EXTRA_MOUNTS+=" --volume $KEYCLOAK_REALMS_PATH:/keycloak-configs" || echo "⚠️ Skipping realm mount"
 
-if [[ -d "$KEYCLOAK_REALMS_PATH" ]]; then
-  EXTRA_MOUNTS+=" --volume $KEYCLOAK_REALMS_PATH:/keycloak-configs"
-else
-  echo "⚠️ Skipping mount: $KEYCLOAK_REALMS_PATH not found"
-fi
-
-k3d cluster create "$cluster_name" \
+  # Create the new cluster
+  echo "🚀 Creating k3d cluster '$cluster_name' with TLS SANs trusted by mkcert CA..."
+  k3d cluster create "$cluster_name" \
     --api-port 6550 \
     --port 80:80@loadbalancer \
     --port 443:443@loadbalancer \
@@ -132,10 +143,9 @@ k3d cluster create "$cluster_name" \
     --kubeconfig-switch-context=false \
     $EXTRA_MOUNTS
 
-    k3d node shell $cluster_name-cluster-server-0 -- ls /helix-assets/helix-theme/login
-
-    echo "✅ Cluster '$cluster_name' successfully created."
+  echo "✅ Cluster '$cluster_name' successfully created."
 }
+
 # ── Cluster Verification ───────────────────────────────────────────────────────
 verify_cluster() {
     local cluster_name=$1
@@ -169,8 +179,10 @@ verify_cluster() {
     echo
     local api_server_url host_and_port cert_info
     api_server_url=$(KUBECONFIG="$kubeconfig_file" kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
+            
+            echo "🔍 api_server_url $api_server_url"
     host_and_port=$(echo "$api_server_url" | sed 's|https://||')
-
+    echo "🔍 Connecting to API server host_and_port at: $host_and_port"
     # Now run the openssl s_client command and capture full output
     cert_info=$(timeout 10 openssl s_client -connect "$host_and_port" -servername "$host_and_port" -showcerts </dev/null 2>&1)
 

@@ -85,12 +85,19 @@ Add plugins, install services, upgrade configs — all via Bash.
 ## 🧰 Built-In Features
 
 ✅ TLS from the start (mkcert + cert-manager + CSI)
+
 ✅ Vault auto-unseal with root token management
+
 ✅ Declarative plugin YAMLs with full CLI validation
+
 ✅ Live CSI TLS injection to pods
+
 ✅ Per-service values, override logic, and full Helm dry-run testing
+
 ✅ TUI menus with whiptail and real-time feedback
+
 ✅ HTML reports and identity walkthroughs included
+
 
 ---
 
@@ -199,8 +206,11 @@ Licensed under the **MIT License**
 Contact for secure white-label enterprise builds or consulting:
 
 📧 [theSAPspecialist@gmail.com](mailto:theSAPspecialist@gmail.com)
+
 🔗 [linkedin.com/in/theSAPspecialist](https://www.linkedin.com/in/theSAPspecialist)
+
 🎥 YouTube: [@theSAPspecialist](https://www.youtube.com/@theSAPspecialist)
+
 
 ---
 
@@ -220,7 +230,7 @@ Helix gives you **identity, secrets, TLS, add-ons, themes, and validation** —
 
 ## 🥋 Chuck Norris Approved
 
-> Because no system is secure… until Chuck says so.
+> Quit going in cirlces, becasue no system is secure… until Chuck says so.
 
 ![Chuck](https://media.giphy.com/media/8vQSQ3cNXuDGo/giphy.gif)
 

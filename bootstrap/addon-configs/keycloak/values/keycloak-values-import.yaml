@@ -1,0 +1,50 @@
+postgresql:
+  enabled: false
+
+replicaCount: 1
+
+image:
+  repository: quay.io/keycloak/keycloak
+  tag: "24.0.3"
+
+command:
+  - "/opt/keycloak/bin/kc.sh"
+
+args:
+  - "import"
+  - "--file"
+  - "/opt/keycloak/data/import/helix-realm.json"
+
+extraEnv: |
+  - name: DB_VENDOR
+    value: postgres
+  - name: DB_ADDR
+    value: postgres.helix.svc.cluster.local
+  - name: DB_PORT
+    value: "5432"
+  - name: DB_DATABASE
+    value: keycloakdb
+  - name: DB_USER_FILE
+    value: /secrets/db-creds/user
+  - name: DB_PASSWORD_FILE
+    value: /secrets/db-creds/password
+
+extraVolumeMounts: |
+  - name: db-creds
+    mountPath: /secrets/db-creds
+    readOnly: true
+  - name: realm-config
+    mountPath: /opt/keycloak/data/import
+    readOnly: true
+
+extraVolumes: |
+  - name: db-creds
+    secret:
+      secretName: keycloak-db-creds
+  - name: realm-config
+    configMap:
+      name: helix-realm-config
+
+startupProbe: {}
+readinessProbe: {}
+livenessProbe: {}
